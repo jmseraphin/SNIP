@@ -1,0 +1,50 @@
+/* =========================
+   APP LAYOUT
+========================= */
+
+.app {
+  display: flex;
+  min-height: 100vh;
+  background: #f4f7fc;
+}
+
+/* =========================
+   MAIN CONTENT
+========================= */
+
+.main-content {
+  margin-left: 270px;
+  width: calc(100% - 270px);
+
+  padding: 30px;
+
+  min-height: 100vh;
+
+  background: linear-gradient(
+    180deg,
+    #f8fbff 0%,
+    #eef3fa 100%
+  );
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 992px) {
+
+  .main-content {
+    margin-left: 88px;
+    width: calc(100% - 88px);
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+  }
+
+}

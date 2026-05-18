@@ -1,41 +1,329 @@
+/* =========================
+   SIDEBAR GLOBAL
+========================= */
+
 .sidebar {
-  width: 240px;
+
+  width: 270px;
+
   height: 100vh;
-  background: linear-gradient(to bottom, #001f4d, #002b80);
-  color: white;
+
   position: fixed;
-  padding: 20px;
+
+  top: 0;
+  left: 0;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  padding: 28px 18px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #021b44 0%,
+      #03265c 45%,
+      #021533 100%
+    );
+
+  color: white;
 
   overflow-y: auto;
+
+  box-shadow:
+    6px 0 25px rgba(0,0,0,0.12);
+
+  z-index: 1000;
+
 }
 
+/* =========================
+   SCROLLBAR
+========================= */
+
 .sidebar::-webkit-scrollbar {
+
   width: 5px;
+
 }
 
 .sidebar::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.3);
-  border-radius: 10px;
+
+  background: rgba(255,255,255,0.25);
+
+  border-radius: 20px;
+
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.sidebar-header {
+
+  margin-bottom: 35px;
+
 }
 
 .logo {
-  margin-bottom: 40px;
-  font-size: 28px;
+
+  font-size: 34px;
+
+  font-weight: 800;
+
+  letter-spacing: 4px;
+
+  margin-bottom: 10px;
+
+  color: white;
+
 }
+
+.system-name {
+
+  font-size: 13px;
+
+  line-height: 1.7;
+
+  color: rgba(255,255,255,0.72);
+
+  max-width: 170px;
+
+  text-align: center;
+
+  margin: 10px auto 0 auto;
+
+}
+
+/* =========================
+   MENU
+========================= */
 
 .menu {
+
   list-style: none;
+
   padding: 0;
+
+  margin: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+
 }
 
-.menu li {
-  padding: 15px;
-  margin-bottom: 10px;
+/* =========================
+   MENU LINK
+========================= */
+
+.menu-link {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+
+  padding: 15px 16px;
+
+  border-radius: 14px;
+
+  text-decoration: none;
+
+  color: rgba(255,255,255,0.82);
+
+  font-size: 15px;
+
+  font-weight: 500;
+
+  transition: 0.25s ease;
+
+  position: relative;
+
+  overflow: hidden;
+
+}
+
+/* ICON */
+
+.menu-icon {
+
+  font-size: 18px;
+
+  min-width: 20px;
+
+}
+
+/* HOVER */
+
+.menu-link:hover {
+
+  background:
+    rgba(255,255,255,0.10);
+
+  color: white;
+
+  transform: translateX(4px);
+
+}
+
+/* ACTIVE */
+
+.menu-link.active {
+
+  background:
+    linear-gradient(
+      90deg,
+      #16a34a,
+      #22c55e
+    );
+
+  color: white;
+
+  font-weight: 700;
+
+  box-shadow:
+    0 8px 18px rgba(34,197,94,0.25);
+
+}
+
+/* ACTIVE LEFT BAR */
+
+.menu-link.active::before {
+
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  top: 10px;
+
+  width: 4px;
+  height: 60%;
+
   border-radius: 10px;
-  cursor: pointer;
-  transition: 0.3s;
+
+  background: white;
+
 }
 
-.menu li:hover {
-  background-color: rgba(255, 255, 255, 0.15);
+/* =========================
+   FOOTER
+========================= */
+
+.sidebar-footer {
+
+  margin-top: 30px;
+
+  padding-top: 18px;
+
+  border-top:
+    1px solid rgba(255,255,255,0.08);
+
+}
+
+.sidebar-footer p {
+
+  font-size: 14px;
+
+  margin-bottom: 4px;
+
+  color: rgba(255,255,255,0.9);
+
+}
+
+.sidebar-footer small {
+
+  color: rgba(255,255,255,0.55);
+
+  font-size: 12px;
+
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 992px) {
+
+  .sidebar {
+
+    width: 88px;
+
+    padding: 24px 12px;
+
+  }
+
+  .logo {
+
+    font-size: 24px;
+
+    text-align: center;
+
+  }
+
+  .system-name {
+
+    display: none;
+
+  }
+
+  .menu-link {
+
+    justify-content: center;
+
+    padding: 16px 10px;
+
+  }
+
+  .menu-link span {
+
+    display: none;
+
+  }
+
+  .menu-icon {
+
+    font-size: 20px;
+
+  }
+
+  .sidebar-footer {
+
+    display: none;
+
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  .sidebar {
+
+    width: 75px;
+
+  }
+
+}
+
+.logo-container {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 10px;
+
+  width: 100%;
+}
+
+.logo-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
 }

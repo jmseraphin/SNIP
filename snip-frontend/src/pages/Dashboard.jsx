@@ -1,41 +1,75 @@
-import Sidebar from "../components/Sidebar";
-import "../styles/dashboard.css";
+import "../styles/Dashboard.css";
+import Topbar from "../components/Topbar";
+import {
+  FaUsers,
+  FaFileAlt,
+  FaCalendarAlt,
+  FaUserShield,
+} from "react-icons/fa";
 
 export default function Dashboard() {
   return (
-    <div className="layout">
+    <>
+      <Topbar title="Tableau de bord" />
 
-      {/* Sidebar */}
-      <Sidebar />
+      {/* CARDS */}
+      <div className="cards">
 
-      {/* Main content */}
-      <div className="main">
-
-        {/* TOP CARDS */}
-        <div className="cards">
-          <div className="card">👤 Personnes<br /><b>12,458</b></div>
-          <div className="card">📄 Documents<br /><b>24,987</b></div>
-          <div className="card">📅 Événements<br /><b>5,214</b></div>
-          <div className="card">👥 Utilisateurs<br /><b>156</b></div>
+        <div className="card">
+          <div className="title-row">
+            <FaUsers className="card-icon" />
+            <h3>Personnes</h3>
+          </div>
+          <p>12,458</p>
         </div>
 
-        {/* CONTENT GRID */}
-        <div className="grid">
-
-          <div className="box">
-            <h3>Activités récentes</h3>
-            <p>- Rakoto Jean ajouté</p>
-            <p>- Nouveau document upload</p>
+        <div className="card">
+          <div className="title-row">
+            <FaFileAlt className="card-icon" />
+            <h3>Documents</h3>
           </div>
+          <p>24,987</p>
+        </div>
 
-          <div className="box">
-            <h3>Statistiques</h3>
-            <div className="chart-placeholder">📊 Graphique ici</div>
+        <div className="card">
+          <div className="title-row">
+            <FaCalendarAlt className="card-icon" />
+            <h3>Événements</h3>
           </div>
+          <p>5,214</p>
+        </div>
 
+        <div className="card">
+          <div className="title-row">
+            <FaUserShield className="card-icon" />
+            <h3>Utilisateurs</h3>
+          </div>
+          <p>156</p>
         </div>
 
       </div>
-    </div>
+
+      {/* CONTENT */}
+      <div className="content-grid">
+
+        <div className="box">
+          <h3>Activités récentes</h3>
+          <ul className="activities">
+            <li>Rakoto Jean ajouté</li>
+            <li>Nouveau document upload</li>
+            <li>Utilisateur créé</li>
+          </ul>
+        </div>
+
+        <div className="box">
+          <h3>Personnes par région</h3>
+          <div className="graph-placeholder">
+            📊 Graphique ici
+          </div>
+        </div>
+
+      </div>
+    </>
   );
 }
+<FaUsers className="card-icon" />

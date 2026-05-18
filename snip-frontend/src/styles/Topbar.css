@@ -1,0 +1,332 @@
+/* =========================
+   TOPBAR RIGHT
+========================= */
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* =========================
+   NOTIFICATION
+========================= */
+
+.notification-box {
+  position: relative;
+
+  width: 34px;
+  height: 34px;
+
+  border-radius: 10px;
+
+  background: #f8fafc;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  transition: all 0.25s ease;
+}
+
+.notification-box:hover {
+  background: #eef2ff;
+  transform: translateY(-2px);
+}
+
+.bell-icon {
+  font-size: 17px;
+  color: #021b44;
+}
+
+/* =========================
+   NOTIFICATION BADGE
+========================= */
+
+.notification-badge {
+  position: absolute;
+
+  top: -3px;
+  right: -3px;
+
+  min-width: 16px;
+  height: 16px;
+
+  border-radius: 50%;
+
+  background: #ef4444;
+  color: white;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 2px;
+}
+
+/* =========================
+   USER MENU
+========================= */
+
+.user-menu {
+  position: relative;
+}
+
+/* =========================
+   AVATAR
+========================= */
+
+.avatar-placeholder {
+  width: 34px;
+  height: 34px;
+
+  border-radius: 50%;
+
+  background: #cbd5e1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 16px;
+
+  cursor: pointer;
+
+  transition: all 0.25s ease;
+}
+
+.avatar-placeholder:hover {
+  background: #94a3b8;
+  transform: scale(1.05);
+}
+
+/* =========================
+   DROPDOWN MENU
+========================= */
+
+.dropdown-menu {
+  position: absolute;
+
+  top: 44px;
+  right: 0;
+
+  width: 170px;
+
+  background: white;
+
+  border-radius: 14px;
+
+  padding: 12px;
+
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+
+  z-index: 100;
+}
+
+/* =========================
+   DROPDOWN TEXT
+========================= */
+
+.dropdown-menu h4 {
+  font-size: 14px;
+  color: #021b44;
+
+  margin-bottom: 2px;
+}
+
+.dropdown-menu p {
+  font-size: 11px;
+  color: #64748b;
+
+  margin-bottom: 10px;
+}
+
+/* =========================
+   SEPARATOR
+========================= */
+
+.dropdown-menu hr {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+
+  margin-bottom: 10px;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.dropdown-menu button {
+  width: 100%;
+
+  border: none;
+
+  background: transparent;
+
+  color: #021b44;
+
+  padding: 9px 10px;
+
+  border-radius: 8px;
+
+  cursor: pointer;
+
+  text-align: left;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  transition: all 0.2s ease;
+}
+
+.dropdown-menu button:hover {
+  background: #f1f5f9;
+}
+
+/* =========================
+   TITLE
+========================= */
+
+.topbar-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.title-icon {
+  font-size: 20px;
+  color: #16a34a;
+}
+
+/* =========================
+   NOTIFICATION DROPDOWN
+========================= */
+
+.notification-wrapper {
+  position: relative;
+}
+
+.notification-dropdown {
+  position: absolute;
+
+  top: 44px;
+  right: 0;
+
+  width: 240px;
+
+  background: white;
+
+  border-radius: 14px;
+
+  padding: 14px;
+
+  box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+
+  z-index: 100;
+}
+
+.notification-dropdown h4 {
+  font-size: 14px;
+  color: #021b44;
+
+  margin-bottom: 12px;
+}
+
+.notification-dropdown ul {
+  list-style: none;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 10px;
+}
+
+.notification-dropdown li {
+  padding: 10px;
+
+  background: #f8fafc;
+
+  border-radius: 10px;
+
+  font-size: 13px;
+
+  color: #334155;
+}
+
+.empty-notif {
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* =========================
+   TOPBAR BUTTONS
+========================= */
+
+.topbar-btn {
+  width: 34px;
+  height: 34px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background: #f8fafc;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  color: #021b44;
+
+  transition: 0.25s ease;
+
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.topbar-btn:hover {
+  background: #eef2ff;
+  transform: translateY(-2px);
+}
+
+/* =========================
+   DARK MODE
+========================= */
+
+.dark-mode {
+  background: #0f172a;
+  color: white;
+}
+
+.dark-mode .topbar,
+.dark-mode .card,
+.dark-mode .box,
+.dark-mode .dropdown-menu,
+.dark-mode .notification-dropdown {
+  background: #1e293b;
+  color: white;
+}
+
+.dark-mode h2,
+.dark-mode h3,
+.dark-mode h4,
+.dark-mode p,
+.dark-mode li,
+.dark-mode button {
+  color: white;
+}
+
+.dark-mode .activities li {
+  background: #334155;
+}
+
+.dark-mode .graph-placeholder {
+  background: #334155;
+}
