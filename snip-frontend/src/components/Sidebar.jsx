@@ -2,7 +2,7 @@ import "../styles/sidebar.css";
 
 import { NavLink } from "react-router-dom";
 
-import hero from "../assets/hero.png";
+import hero from "../assets/snipLogo1.png";
 
 import {
   FaTachometerAlt,
@@ -33,18 +33,9 @@ export default function Sidebar() {
             className="logo-image"
           />
 
-          <h1 className="logo">
-            SNIP
-          </h1>
-
         </div>
 
-        <p className="system-name">
-          Système National
-          d’Information Personnel
-        </p>
-
-      </div>
+        </div>
 
       {/* MENU */}
       <ul className="menu">
