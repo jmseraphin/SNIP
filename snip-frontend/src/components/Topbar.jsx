@@ -1,4 +1,5 @@
 import "../styles/Topbar.css";
+import { Link } from "react-router-dom";
 
 import {
   FaBell,
@@ -207,13 +208,19 @@ export default function Topbar({ title }) {
 
               <hr />
 
-              <button>
-                Paramètres
-              </button>
+              <Link
+               to="/settings"
+               className="dropdown-link"
+              >
+               Paramètres
+              </Link>
 
-              <button>
-                Déconnexion
-              </button>
+              <Link
+               to="/login"
+               className="dropdown-link"
+              >
+               Déconnexion
+              </Link>
 
             </div>
 

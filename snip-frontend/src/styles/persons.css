@@ -1,0 +1,507 @@
+/* =========================
+   PERSONS STATS
+========================= */
+
+.persons-stats {
+  margin-bottom: 24px;
+}
+
+.stats-card {
+  background: white;
+  border-radius: 18px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.06);
+}
+
+.stats-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: rgba(22,163,74,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #16a34a;
+  font-size: 28px;
+}
+
+.stats-card h3 {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.stats-card p {
+  font-size: 30px;
+  font-weight: 800;
+  color: #021b44;
+}
+
+/* =========================
+   TABLE BOX
+========================= */
+
+.table-box {
+  background: white;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  overflow-x: auto;
+}
+
+/* =========================
+   TABLE HEADER
+========================= */
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.table-header h3 {
+  font-size: 20px;
+  color: #021b44;
+}
+
+.table-header span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.add-btn,
+.export-btn {
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.add-btn {
+  background: linear-gradient(90deg,#16a34a,#22c55e);
+  color: white;
+}
+
+.export-btn {
+  background: #eef2ff;
+  color: #021b44;
+}
+
+.add-btn:hover,
+.export-btn:hover {
+  transform: translateY(-2px);
+}
+
+/* =========================
+   FILTERS
+========================= */
+
+.filters-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 14px 10px 38px;
+  border: 1px solid #dbe2ea;
+  border-radius: 10px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+}
+
+.filters-bar select {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #dbe2ea;
+}
+
+/* =========================
+   TABLE
+========================= */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #cbd5e1;
+}
+
+thead {
+  background: #e2e8f0;
+}
+
+thead th {
+  padding: 10px;
+  font-size: 12px;
+  text-align: left;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+tbody td {
+  padding: 8px;
+  font-size: 13px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+tbody tr:hover {
+  background: #dbeafe;
+}
+
+/* =========================
+   PERSON INFO
+========================= */
+
+.person-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.person-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg,#16a34a,#22c55e);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+/* =========================
+   STATUS
+========================= */
+
+.status {
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.status.active {
+  background: rgba(22,163,74,0.12);
+  color: #16a34a;
+}
+
+.status.inactive {
+  background: rgba(239,68,68,0.12);
+  color: #ef4444;
+}
+
+/* =========================
+   ACTIONS (PRO UPGRADE)
+========================= */
+
+.action-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+/* wrapper tooltip */
+.tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* icon buttons bigger */
+.action-buttons a,
+.action-buttons button {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+/* ICON SIZE FIX (IMPORTANT) */
+.action-buttons svg {
+  font-size: 18px;
+}
+
+/* tooltip text */
+.tooltip span {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f172a;
+  color: white;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.2s;
+  white-space: nowrap;
+}
+
+/* show tooltip */
+.tooltip:hover span {
+  opacity: 1;
+}
+
+/* BUTTON COLORS */
+.view-btn {
+  background: rgba(59,130,246,0.12);
+  color: #2563eb;
+}
+
+.edit-btn {
+  background: rgba(245,158,11,0.12);
+  color: #d97706;
+}
+
+.delete-btn {
+  background: rgba(239,68,68,0.12);
+  color: #ef4444;
+}
+
+/* hover effect */
+.action-buttons a:hover,
+.action-buttons button:hover {
+  transform: translateY(-2px) scale(1.05);
+}
+
+/* =========================
+   PAGINATION PRO
+========================= */
+
+.pagination {
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pagination button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: #eef2ff;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.pagination button:hover {
+  transform: scale(1.1);
+}
+
+.page-numbers {
+  display: flex;
+  gap: 6px;
+}
+
+.page-numbers span {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.page-numbers span:hover {
+  background: #cbd5e1;
+}
+
+.active-page {
+  background: #16a34a !important;
+  color: white;
+}
+
+/* =========================
+   EXPORT DROPDOWN
+========================= */
+
+.export-wrapper {
+  position: relative;
+}
+
+.export-dropdown {
+  position: absolute;
+  top: 42px;
+  right: 0;
+  width: 160px;
+  background: white;
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+  z-index: 100;
+}
+
+.export-dropdown button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  color: #0f172a;
+  font-size: 13px;
+}
+
+.export-dropdown button:hover {
+  background: #e2e8f0;
+}
+
+/* =========================
+   MODAL
+========================= */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-box {
+  width: 360px;
+  background: white;
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-box input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #dbe2ea;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cancel-btn {
+  background: #e2e8f0;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.save-btn {
+  background: #16a34a;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+/* =========================
+   DARK MODE
+========================= */
+
+.dark-mode .table-box,
+.dark-mode .stats-card,
+.dark-mode .modal-box,
+.dark-mode .export-dropdown {
+  background: #1e293b;
+  color: white;
+}
+
+.dark-mode table,
+.dark-mode thead,
+.dark-mode tbody td {
+  color: white;
+}
+
+.dark-mode .export-dropdown button {
+  color: white;
+}
+
+.dark-mode .export-dropdown button:hover {
+  background: #334155;
+}
+
+.tooltip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.tooltip span {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f172a;
+  color: white;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.2s;
+  white-space: nowrap;
+}
+
+.tooltip:hover span {
+  opacity: 1;
+}
+
+.tooltip svg {
+  font-size: 18px;
+}
