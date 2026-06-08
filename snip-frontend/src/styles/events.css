@@ -1,0 +1,447 @@
+/* =========================
+   EVENTS STATS
+========================= */
+
+.events-stats {
+  margin-bottom: 24px;
+}
+
+.stats-card {
+  background: white;
+  border-radius: 18px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+}
+
+.stats-icon {
+  width: 55px;
+  height: 55px;
+  border-radius: 16px;
+  background: rgba(59, 130, 246, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2563eb;
+  font-size: 22px;
+}
+
+.stats-card h3 {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.stats-card p {
+  font-size: 28px;
+  font-weight: 800;
+  color: #021b44;
+}
+
+/* =========================
+   TABLE BOX
+========================= */
+
+.table-box {
+  background: white;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  overflow-x: auto;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.table-header h3 {
+  font-size: 20px;
+  color: #021b44;
+  margin-bottom: 4px;
+}
+
+.table-header span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.add-btn,
+.export-btn {
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  transition: 0.2s ease;
+}
+
+.add-btn {
+  background: linear-gradient(
+    90deg,
+    #16a34a,
+    #22c55e
+  );
+  color: white;
+}
+
+.export-btn {
+  background: #eef2ff;
+  color: #021b44;
+}
+
+.add-btn:hover,
+.export-btn:hover {
+  transform: translateY(-2px);
+}
+
+/* =========================
+   FILTERS
+========================= */
+
+.filters-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 240px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 14px 10px 40px;
+
+  border: 1px solid #dbe2ea;
+  border-radius: 10px;
+
+  outline: none;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+}
+
+.filters-bar select {
+  border: 1px solid #dbe2ea;
+  border-radius: 10px;
+  padding: 10px;
+  background: white;
+}
+
+/* =========================
+   TABLE
+========================= */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #cbd5e1;
+}
+
+thead {
+  background: #e2e8f0;
+}
+
+thead th {
+  padding: 11px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: #021b44;
+
+  border-bottom: 1px solid #cbd5e1;
+}
+
+tbody td {
+  padding: 10px;
+  font-size: 13px;
+  color: #334155;
+
+  border-bottom: 1px solid #e2e8f0;
+}
+
+tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+tbody tr:hover {
+  background: #dbeafe;
+}
+
+/* =========================
+   STATUS
+========================= */
+
+.status {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.status.active {
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+}
+
+.status.pending {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+/* =========================
+   ACTION BUTTONS
+========================= */
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.action-buttons button {
+  width: 38px;
+  height: 38px;
+
+  border: none;
+  border-radius: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.action-buttons svg {
+  font-size: 18px;
+}
+
+.view-btn {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+.edit-btn {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+.delete-btn {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.action-buttons button:hover {
+  transform: translateY(-2px);
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 900px) {
+
+  .table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .filters-bar {
+    flex-direction: column;
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  .table-box {
+    padding: 14px;
+  }
+
+  table {
+    min-width: 800px;
+  }
+
+}
+
+/* =========================
+   DARK MODE
+========================= */
+
+.dark-mode .table-box,
+.dark-mode .stats-card {
+  background: #1e293b;
+  color: white;
+}
+
+.dark-mode thead {
+  background: #334155;
+}
+
+.dark-mode table,
+.dark-mode td,
+.dark-mode th {
+  color: white;
+}
+
+/* SCROLL TABLE */
+
+.table-box {
+  max-height: 700px;
+  overflow-y: auto;
+}
+
+/* EXPORT */
+
+.export-wrapper {
+  position: relative;
+}
+
+.export-dropdown {
+  position: absolute;
+  top: 45px;
+  right: 0;
+
+  width: 160px;
+
+  background: white;
+
+  border-radius: 10px;
+
+  padding: 6px;
+
+  box-shadow: 0 10px 20px rgba(0,0,0,.12);
+
+  z-index: 100;
+}
+
+.export-dropdown button {
+  width: 100%;
+
+  border: none;
+
+  background: transparent;
+
+  padding: 10px;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  color: #021b44;
+}
+
+.export-dropdown button:hover {
+  background: #f1f5f9;
+}
+
+/* MODAL */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+
+  background: rgba(0,0,0,.45);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 200;
+}
+
+.modal-box {
+  width: 420px;
+
+  background: white;
+
+  border-radius: 18px;
+
+  padding: 24px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 12px;
+}
+
+.modal-box input,
+.modal-box select {
+  padding: 12px;
+
+  border: 1px solid #dbe2ea;
+
+  border-radius: 10px;
+}
+
+.modal-actions {
+  display: flex;
+
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  margin-top: 10px;
+}
+
+.cancel-btn {
+  background: #e2e8f0;
+
+  border: none;
+
+  padding: 10px 16px;
+
+  border-radius: 10px;
+
+  cursor: pointer;
+}
+
+.save-btn {
+  background: #16a34a;
+
+  color: white;
+
+  border: none;
+
+  padding: 10px 16px;
+
+  border-radius: 10px;
+
+  cursor: pointer;
+}

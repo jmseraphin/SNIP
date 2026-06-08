@@ -6,6 +6,7 @@ import Persons from "./pages/Persons";
 import PersonDetails from "./pages/PersonDetails";
 import Settings from "./pages/Settings";
 import Search from "./pages/Search";
+import Events from "./pages/Events";
 
 import Layout from "./components/Layout";
 
@@ -35,6 +36,7 @@ function App() {
             element={<Settings />}
           />
           <Route path="/search" element={<Search />} />
+          <Route path="/events" element={<Events />} />
 
           {/* TOUJOURS EN DERNIER */}
           <Route

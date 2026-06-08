@@ -505,3 +505,51 @@ tbody tr:hover {
 .tooltip svg {
   font-size: 18px;
 }
+
+/* TOOLTIP FIX (important) */
+.tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* hide text by default */
+.tooltip span {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f172a;
+  color: white;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.2s;
+  white-space: nowrap;
+}
+
+/* show on hover */
+.tooltip:hover span {
+  opacity: 1;
+}
+
+/* ACTION BUTTON SIZE FIX */
+.action-buttons button {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-right: 6px;
+}
+
+/* ICON SIZE FIX */
+.action-buttons svg {
+  font-size: 15px;
+}

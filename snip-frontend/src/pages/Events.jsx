@@ -1,48 +1,45 @@
-import "../styles/persons.css";
+import "../styles/events.css";
 
 import Topbar from "../components/Topbar";
 
 import {
+  FaCalendarAlt,
   FaSearch,
   FaPlus,
-  FaEdit,
-  FaTrash,
-  FaEye,
   FaDownload,
-  FaUsers
+  FaEye,
+  FaEdit,
+  FaTrash
 } from "react-icons/fa";
 
 import { useState, useRef, useEffect } from "react";
 
-export default function Persons() {
+export default function Events() {
 
-  const [persons, setPersons] = useState([
+  const [events, setEvents] = useState([
     {
       id: 1,
-      national_id: "101001",
-      first_name: "Jean",
-      last_name: "Rakoto",
-      gender: "Homme",
-      nationality: "Malagasy",
-      status: "Actif"
+      type: "Naissance",
+      person: "Jean Rakoto",
+      date: "12/05/2026",
+      place: "Antananarivo",
+      status: "Validé"
     },
     {
       id: 2,
-      national_id: "101002",
-      first_name: "Sarah",
-      last_name: "Rabe",
-      gender: "Femme",
-      nationality: "Malagasy",
-      status: "Actif"
+      type: "Mariage",
+      person: "Sarah Rabe",
+      date: "20/05/2026",
+      place: "Toamasina",
+      status: "En attente"
     },
     {
       id: 3,
-      national_id: "101003",
-      first_name: "Lucas",
-      last_name: "Ranaivo",
-      gender: "Homme",
-      nationality: "Française",
-      status: "Inactif"
+      type: "Décès",
+      person: "Paul Randria",
+      date: "01/06/2026",
+      place: "Fianarantsoa",
+      status: "Validé"
     }
   ]);
 
@@ -52,7 +49,7 @@ export default function Persons() {
   const [openView, setOpenView] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
 
-  const [selectedPerson, setSelectedPerson] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
   const exportRef = useRef();
 
@@ -67,22 +64,22 @@ export default function Persons() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const totalPages = Math.ceil(persons.length / 5);
+  const total = events.length;
 
   return (
     <>
-      <Topbar title="Gestion des personnes" />
+      <Topbar title="Gestion des évènements" />
 
       {/* STATS */}
-      <div className="persons-stats">
+      <div className="events-stats">
         <div className="stats-card">
           <div className="stats-icon">
-            <FaUsers />
+            <FaCalendarAlt />
           </div>
 
           <div>
-            <h3>Total personnes</h3>
-            <p>{persons.length}</p>
+            <h3>Total évènements</h3>
+            <p>{total}</p>
           </div>
         </div>
       </div>
@@ -94,13 +91,15 @@ export default function Persons() {
         <div className="table-header">
 
           <div>
-            <h3>Liste des personnes</h3>
-            <span>Gestion complète des citoyens enregistrés</span>
+            <h3>Liste des évènements</h3>
+            <span>Gestion des naissances, mariages, divorces et décès</span>
           </div>
 
           <div className="header-actions">
 
+            {/* EXPORT */}
             <div className="export-wrapper" ref={exportRef}>
+
               <button
                 className="export-btn"
                 onClick={() => setOpenExport(!openExport)}
@@ -116,8 +115,10 @@ export default function Persons() {
                   <button>Export PDF</button>
                 </div>
               )}
+
             </div>
 
+            {/* ADD */}
             <button
               className="add-btn"
               onClick={() => setOpenModal(true)}
@@ -135,61 +136,47 @@ export default function Persons() {
 
           <div className="search-box">
             <FaSearch className="search-icon" />
-            <input type="text" placeholder="Rechercher une personne..." />
+            <input type="text" placeholder="Rechercher un évènement..." />
           </div>
 
           <select>
-            <option>Tous les sexes</option>
-            <option>Homme</option>
-            <option>Femme</option>
-          </select>
-
-          <select>
-            <option>Toutes nationalités</option>
-            <option>Malagasy</option>
-            <option>Française</option>
+            <option>Tous les types</option>
+            <option>Naissance</option>
+            <option>Mariage</option>
+            <option>Divorce</option>
+            <option>Décès</option>
           </select>
 
         </div>
 
         {/* TABLE */}
         <table>
+
           <thead>
             <tr>
-              <th>CIN</th>
-              <th>Nom complet</th>
-              <th>Sexe</th>
-              <th>Nationalité</th>
+              <th>ID</th>
+              <th>Type</th>
+              <th>Personne</th>
+              <th>Date</th>
+              <th>Lieu</th>
               <th>Statut</th>
               <th>Actions</th>
             </tr>
           </thead>
 
           <tbody>
-            {persons.map((person) => (
-              <tr key={person.id}>
+            {events.map((event) => (
+              <tr key={event.id}>
 
-                <td>{person.national_id}</td>
-
-                <td>
-                  <div className="person-info">
-                    <div className="person-avatar">
-                      {person.first_name.charAt(0)}
-                    </div>
-
-                    <div>
-                      <h4>{person.first_name} {person.last_name}</h4>
-                      <span>ID: {person.id}</span>
-                    </div>
-                  </div>
-                </td>
-
-                <td>{person.gender}</td>
-                <td>{person.nationality}</td>
+                <td>EVT-{event.id}</td>
+                <td>{event.type}</td>
+                <td>{event.person}</td>
+                <td>{event.date}</td>
+                <td>{event.place}</td>
 
                 <td>
-                  <span className={person.status === "Actif" ? "status active" : "status inactive"}>
-                    {person.status}
+                  <span className={event.status === "Validé" ? "status active" : "status pending"}>
+                    {event.status}
                   </span>
                 </td>
 
@@ -198,41 +185,38 @@ export default function Persons() {
                   <div className="action-buttons">
 
                     <button
-                      className="tooltip view-btn"
+                      className="view-btn"
                       onClick={() => {
-                        setSelectedPerson(person);
+                        setSelectedEvent(event);
                         setOpenView(true);
                       }}
                     >
                       <FaEye />
-                      <span>Voir</span>
                     </button>
 
                     <button
-                      className="tooltip edit-btn"
+                      className="edit-btn"
                       onClick={() => {
-                        setSelectedPerson(person);
+                        setSelectedEvent(event);
                         setOpenEdit(true);
                       }}
                     >
                       <FaEdit />
-                      <span>Modifier</span>
                     </button>
 
                     <button
-                      className="tooltip delete-btn"
+                      className="delete-btn"
                       onClick={() => {
                         const ok = window.confirm(
-                          `Supprimer ${person.first_name} ${person.last_name} ?`
+                          `Supprimer EVT-${event.id} ?`
                         );
 
                         if (ok) {
-                          setPersons(persons.filter(p => p.id !== person.id));
+                          setEvents(events.filter(e => e.id !== event.id));
                         }
                       }}
                     >
                       <FaTrash />
-                      <span>Supprimer</span>
                     </button>
 
                   </div>
@@ -241,54 +225,46 @@ export default function Persons() {
               </tr>
             ))}
           </tbody>
+
         </table>
-
-        {/* PAGINATION */}
-        <div className="pagination">
-          <button>&lt;</button>
-
-          <div className="page-numbers">
-            {[...Array(totalPages)].map((_, i) => (
-              <span key={i}>{i + 1}</span>
-            ))}
-          </div>
-
-          <button>&gt;</button>
-        </div>
 
       </div>
 
       {/* ================= VIEW MODAL ================= */}
-      {openView && selectedPerson && (
+      {openView && selectedEvent && (
         <div className="modal-overlay">
           <div className="modal-box">
-            <h3>Détails personne</h3>
 
-            <p><b>CIN:</b> {selectedPerson.national_id}</p>
-            <p><b>Nom:</b> {selectedPerson.first_name} {selectedPerson.last_name}</p>
-            <p><b>Sexe:</b> {selectedPerson.gender}</p>
-            <p><b>Nationalité:</b> {selectedPerson.nationality}</p>
-            <p><b>Statut:</b> {selectedPerson.status}</p>
+            <h3>Détails évènement</h3>
+
+            <p><b>ID:</b> EVT-{selectedEvent.id}</p>
+            <p><b>Type:</b> {selectedEvent.type}</p>
+            <p><b>Personne:</b> {selectedEvent.person}</p>
+            <p><b>Date:</b> {selectedEvent.date}</p>
+            <p><b>Lieu:</b> {selectedEvent.place}</p>
+            <p><b>Statut:</b> {selectedEvent.status}</p>
 
             <div className="modal-actions">
               <button className="cancel-btn" onClick={() => setOpenView(false)}>
                 Fermer
               </button>
             </div>
+
           </div>
         </div>
       )}
 
       {/* ================= EDIT MODAL ================= */}
-      {openEdit && selectedPerson && (
+      {openEdit && selectedEvent && (
         <div className="modal-overlay">
           <div className="modal-box">
 
-            <h3>Modifier personne</h3>
+            <h3>Modifier évènement</h3>
 
-            <input defaultValue={selectedPerson.first_name} />
-            <input defaultValue={selectedPerson.last_name} />
-            <input defaultValue={selectedPerson.national_id} />
+            <input defaultValue={selectedEvent.type} />
+            <input defaultValue={selectedEvent.person} />
+            <input defaultValue={selectedEvent.date} />
+            <input defaultValue={selectedEvent.place} />
 
             <div className="modal-actions">
 
@@ -298,7 +274,7 @@ export default function Persons() {
 
               <button
                 className="save-btn"
-                onClick={() => alert("Modification enregistrée")}
+                onClick={() => alert("Modifié avec succès")}
               >
                 Sauvegarder
               </button>
@@ -314,11 +290,19 @@ export default function Persons() {
         <div className="modal-overlay">
           <div className="modal-box">
 
-            <h3>Ajouter une personne</h3>
+            <h3>Ajouter un évènement</h3>
 
-            <input placeholder="Nom" />
-            <input placeholder="Prénom" />
-            <input placeholder="CIN" />
+            <input placeholder="Nom complet" />
+
+            <select>
+              <option>Naissance</option>
+              <option>Mariage</option>
+              <option>Divorce</option>
+              <option>Décès</option>
+            </select>
+
+            <input type="date" />
+            <input type="text" placeholder="Lieu" />
 
             <div className="modal-actions">
 
