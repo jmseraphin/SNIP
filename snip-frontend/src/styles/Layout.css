@@ -9,12 +9,13 @@
 }
 
 /* =========================
-   MAIN CONTENT
+   MAIN CONTENT (DEFAULT)
 ========================= */
 
 .main-content {
-  margin-left: 270px;
-  width: calc(100% - 270px);
+  flex: 1;
+
+  margin-left: 220px; /* match sidebar width */
 
   padding: 30px;
 
@@ -25,6 +26,16 @@
     #f8fbff 0%,
     #eef3fa 100%
   );
+
+  transition: all 0.3s ease;
+}
+
+/* =========================
+   SIDEBAR COLLAPSED STATE
+========================= */
+
+.main-content.expanded {
+  margin-left: 70px;
 }
 
 /* =========================
@@ -35,7 +46,7 @@
 
   .main-content {
     margin-left: 88px;
-    width: calc(100% - 88px);
+    padding: 20px;
   }
 
 }

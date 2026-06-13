@@ -13,36 +13,57 @@ import {
   FaFolderOpen,
   FaUserShield,
   FaClipboardList,
-  FaCog
+  FaCog,
+  FaBars
 } from "react-icons/fa";
 
-export default function Sidebar() {
+export default function Sidebar({
+  collapsed,
+  setCollapsed
+}) {
 
   return (
 
-    <div className="sidebar">
+    <div
+      className={
+        collapsed
+          ? "sidebar collapsed"
+          : "sidebar"
+      }
+    >
 
-      {/* LOGO */}
+      {/* HEADER */}
       <div className="sidebar-header">
 
-        <div className="logo-container">
+        {!collapsed && (
 
-          <img
-            src={hero}
-            alt="SNIP Logo"
-            className="logo-image"
-          />
+          <div className="logo-container">
 
-        </div>
+            <img
+              src={hero}
+              alt="SNIP Logo"
+              className="logo-image"
+            />
 
-        </div>
+          </div>
+
+        )}
+
+        <button
+          className="toggle-btn"
+          onClick={() =>
+            setCollapsed(!collapsed)
+          }
+        >
+          <FaBars />
+        </button>
+
+      </div>
 
       {/* MENU */}
       <ul className="menu">
 
-        {/* DASHBOARD */}
         <li>
-
           <NavLink
             to="/"
             className={({ isActive }) =>
@@ -51,20 +72,12 @@ export default function Sidebar() {
                 : "menu-link"
             }
           >
-
             <FaTachometerAlt className="menu-icon" />
-
-            <span>
-              Tableau de bord
-            </span>
-
+            <span>Tableau de bord</span>
           </NavLink>
-
         </li>
 
-        {/* PERSONS */}
         <li>
-
           <NavLink
             to="/persons"
             className={({ isActive }) =>
@@ -73,20 +86,12 @@ export default function Sidebar() {
                 : "menu-link"
             }
           >
-
             <FaUsers className="menu-icon" />
-
-            <span>
-              Personnes
-            </span>
-
+            <span>Personnes</span>
           </NavLink>
-
         </li>
 
-        {/* SEARCH */}
         <li>
-
           <NavLink
             to="/search"
             className={({ isActive }) =>
@@ -95,20 +100,12 @@ export default function Sidebar() {
                 : "menu-link"
             }
           >
-
             <FaSearch className="menu-icon" />
-
-            <span>
-              Recherche
-            </span>
-
+            <span>Recherche</span>
           </NavLink>
-
         </li>
 
-        {/* EVENTS */}
         <li>
-
           <NavLink
             to="/events"
             className={({ isActive }) =>
@@ -117,20 +114,12 @@ export default function Sidebar() {
                 : "menu-link"
             }
           >
-
             <FaCalendarAlt className="menu-icon" />
-
-            <span>
-              Événements
-            </span>
-
+            <span>Événements</span>
           </NavLink>
-
         </li>
 
-        {/* DOCUMENTS */}
         <li>
-
           <NavLink
             to="/documents"
             className={({ isActive }) =>
@@ -139,20 +128,12 @@ export default function Sidebar() {
                 : "menu-link"
             }
           >
-
             <FaFileAlt className="menu-icon" />
-
-            <span>
-              Documents
-            </span>
-
+            <span>Documents</span>
           </NavLink>
-
         </li>
 
-        {/* FILES */}
         <li>
-
           <NavLink
             to="/files"
             className={({ isActive }) =>
@@ -161,20 +142,12 @@ export default function Sidebar() {
                 : "menu-link"
             }
           >
-
             <FaFolderOpen className="menu-icon" />
-
-            <span>
-              Fichiers
-            </span>
-
+            <span>Fichiers</span>
           </NavLink>
-
         </li>
 
-        {/* USERS */}
         <li>
-
           <NavLink
             to="/users"
             className={({ isActive }) =>
@@ -183,20 +156,12 @@ export default function Sidebar() {
                 : "menu-link"
             }
           >
-
             <FaUserShield className="menu-icon" />
-
-            <span>
-              Utilisateurs & rôles
-            </span>
-
+            <span>Utilisateurs & rôles</span>
           </NavLink>
-
         </li>
 
-        {/* AUDIT */}
         <li>
-
           <NavLink
             to="/audit-logs"
             className={({ isActive }) =>
@@ -205,20 +170,12 @@ export default function Sidebar() {
                 : "menu-link"
             }
           >
-
             <FaClipboardList className="menu-icon" />
-
-            <span>
-              Audit logs
-            </span>
-
+            <span>Audit logs</span>
           </NavLink>
-
         </li>
 
-        {/* SETTINGS */}
         <li>
-
           <NavLink
             to="/settings"
             className={({ isActive }) =>
@@ -227,31 +184,27 @@ export default function Sidebar() {
                 : "menu-link"
             }
           >
-
             <FaCog className="menu-icon" />
-
-            <span>
-              Paramètres
-            </span>
-
+            <span>Paramètres</span>
           </NavLink>
-
         </li>
 
       </ul>
 
       {/* FOOTER */}
-      <div className="sidebar-footer">
+      {!collapsed && (
 
-        <p>
-          SNIP v1.0
-        </p>
+        <div className="sidebar-footer">
 
-        <small>
-          Système sécurisé
-        </small>
+          <p>SNIP v1.0</p>
 
-      </div>
+          <small>
+            Système sécurisé
+          </small>
+
+        </div>
+
+      )}
 
     </div>
 

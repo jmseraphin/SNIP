@@ -16,6 +16,7 @@ body,
 }
 
 body {
+  font-size: 13px;
   background: #f4f7fc;
   color: #111827;
 }
@@ -58,8 +59,8 @@ body {
 }
 
 .topbar h2 {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 600;
   color: #021b44;
 }
 
@@ -142,14 +143,13 @@ body {
 
 /* TEXT */
 .card h3 {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 600;
   color: #64748b;
-  margin: 0;
 }
 
 .card p {
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 800;
   color: #021b44;
 }
@@ -172,8 +172,10 @@ body {
 }
 
 .box h3 {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   color: #021b44;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 /* =========================
@@ -188,10 +190,11 @@ body {
 }
 
 .activities li {
-  padding: 12px 14px;
+  padding: 10px 12px;
+  font-size: 13px;
   background: #f9fbff;
   border-left: 4px solid #16a34a;
-  border-radius: 12px;
+  border-radius: 10px;
 }
 
 /* =========================
