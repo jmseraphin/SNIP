@@ -143,15 +143,11 @@ body {
 
 /* TEXT */
 .card h3 {
-  font-size: 13px;
-  font-weight: 600;
-  color: #64748b;
+  font-size: calc(var(--font-size-base) + 1px);
 }
 
 .card p {
-  font-size: 20px;
-  font-weight: 800;
-  color: #021b44;
+  font-size: calc(var(--font-size-base) + 7px);
 }
 
 /* =========================
