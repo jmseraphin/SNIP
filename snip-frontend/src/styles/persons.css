@@ -552,4 +552,10 @@ tbody tr:hover {
 /* ICON SIZE FIX */
 .action-buttons svg {
   font-size: 15px;
-}
+}.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.modal-box.wide { max-width: 760px; }
+.person-avatar.big { width: 74px; height: 74px; font-size: 28px; }
+.details-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+textarea { min-height: 92px; resize: vertical; padding: 12px 14px; border: 1px solid #dbe2ea; border-radius: 12px; font-family: inherit; }
+.pagination span { color: #64748b; font-size: 13px; }
+@media (max-width: 800px) { .form-grid, .details-grid { grid-template-columns: 1fr; } }

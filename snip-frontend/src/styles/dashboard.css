@@ -235,4 +235,8 @@ body {
   .content-grid {
     grid-template-columns: 1fr;
   }
-}
+}.bar-chart { display: grid; gap: 12px; margin-top: 18px; }
+.bar-row { display: grid; grid-template-columns: 130px 1fr 55px; align-items: center; gap: 10px; font-size: 13px; }
+.bar-row div { height: 10px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+.bar-row b { display: block; height: 100%; background: linear-gradient(90deg, #0067d8, #20b47b); border-radius: 999px; }
+.bar-row em { font-style: normal; text-align: right; color: #475569; }

@@ -1,5 +1,6 @@
 import "../styles/Topbar.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { authApi } from "../services/api";
 
 import {
   FaBell,
@@ -15,6 +16,7 @@ import {
 } from "react";
 
 export default function Topbar({ title }) {
+  const navigate = useNavigate();
 
   /* USER MENU */
   const [openMenu, setOpenMenu] = useState(false);
@@ -215,12 +217,7 @@ export default function Topbar({ title }) {
                Paramètres
               </Link>
 
-              <Link
-               to="/login"
-               className="dropdown-link"
-              >
-               Déconnexion
-              </Link>
+              <button className="dropdown-link" onClick={() => { authApi.logout(); navigate("/login", { replace: true }); }}>Déconnexion</button>
 
             </div>
 

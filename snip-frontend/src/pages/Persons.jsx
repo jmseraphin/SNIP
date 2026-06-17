@@ -1,344 +1,66 @@
 import "../styles/persons.css";
-
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Topbar from "../components/Topbar";
+import { personsApi } from "../services/api";
+import { fmtDate, fullName, nationalId, phone, number } from "../utils/format";
+import { FaSearch, FaPlus, FaEdit, FaTrash, FaEye, FaUsers } from "react-icons/fa";
 
-import {
-  FaSearch,
-  FaPlus,
-  FaEdit,
-  FaTrash,
-  FaEye,
-  FaDownload,
-  FaUsers
-} from "react-icons/fa";
-
-import { useState, useRef, useEffect } from "react";
+const emptyForm = { last_name: "", first_name: "", cin: "", phone: "", gender: "", nationality: "Malagasy", birth_date: "", birth_place: "", status: "active" };
 
 export default function Persons() {
+  const navigate = useNavigate();
+  const [persons, setPersons] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [gender, setGender] = useState("");
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState(emptyForm);
+  const [error, setError] = useState("");
 
-  const [persons, setPersons] = useState([
-    {
-      id: 1,
-      national_id: "101001",
-      first_name: "Jean",
-      last_name: "Rakoto",
-      gender: "Homme",
-      nationality: "Malagasy",
-      status: "Actif"
-    },
-    {
-      id: 2,
-      national_id: "101002",
-      first_name: "Sarah",
-      last_name: "Rabe",
-      gender: "Femme",
-      nationality: "Malagasy",
-      status: "Actif"
-    },
-    {
-      id: 3,
-      national_id: "101003",
-      first_name: "Lucas",
-      last_name: "Ranaivo",
-      gender: "Homme",
-      nationality: "Française",
-      status: "Inactif"
-    }
-  ]);
+  const load = async () => {
+    try {
+      setLoading(true);
+      const res = await personsApi.list({ q: query, gender });
+      setPersons(res.data || []);
+      setTotal(res.total || 0);
+    } catch {
+      setPersons([]);
+      setTotal(0);
+    } finally { setLoading(false); }
+  };
+  useEffect(() => { load(); }, []);
+  useEffect(() => { const t = setTimeout(load, 350); return () => clearTimeout(t); }, [query, gender]);
 
-  const [openExport, setOpenExport] = useState(false);
-  const [openModal, setOpenModal] = useState(false);
-
-  const [openView, setOpenView] = useState(false);
-  const [openEdit, setOpenEdit] = useState(false);
-
-  const [selectedPerson, setSelectedPerson] = useState(null);
-
-  const exportRef = useRef();
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (exportRef.current && !exportRef.current.contains(event.target)) {
-        setOpenExport(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const totalPages = Math.ceil(persons.length / 5);
+  const openCreate = () => { setForm(emptyForm); setModal("create"); setError(""); };
+  const openEdit = (p) => { setForm({ ...emptyForm, ...p, cin: p.cin || "" }); setModal(p.id); setError(""); };
+  const save = async () => {
+    try {
+      setError("");
+      if (modal === "create") await personsApi.create(form); else await personsApi.update(modal, form);
+      setModal(null); await load();
+    } catch (e) { setError(e.message); }
+  };
+  const remove = async (p) => {
+    if (!window.confirm(`Supprimer ${fullName(p)} ?`)) return;
+    try { await personsApi.remove(p.id); await load(); } catch (e) { alert(e.message); }
+  };
 
   return (
     <>
       <Topbar title="Gestion des personnes" />
-
-      {/* STATS */}
-      <div className="persons-stats">
-        <div className="stats-card">
-          <div className="stats-icon">
-            <FaUsers />
-          </div>
-
-          <div>
-            <h3>Total personnes</h3>
-            <p>{persons.length}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* TABLE */}
+      <div className="persons-stats"><div className="stats-card"><div className="stats-icon"><FaUsers /></div><div><h3>Total personnes</h3><p>{loading ? "…" : number(total)}</p></div></div></div>
       <div className="table-box">
-
-        {/* HEADER */}
-        <div className="table-header">
-
-          <div>
-            <h3>Liste des personnes</h3>
-            <span>Gestion complète des citoyens enregistrés</span>
-          </div>
-
-          <div className="header-actions">
-
-            <div className="export-wrapper" ref={exportRef}>
-              <button
-                className="export-btn"
-                onClick={() => setOpenExport(!openExport)}
-              >
-                <FaDownload />
-                Exporter
-              </button>
-
-              {openExport && (
-                <div className="export-dropdown">
-                  <button>Export Excel</button>
-                  <button>Export Word</button>
-                  <button>Export PDF</button>
-                </div>
-              )}
-            </div>
-
-            <button
-              className="add-btn"
-              onClick={() => setOpenModal(true)}
-            >
-              <FaPlus />
-              Ajouter
-            </button>
-
-          </div>
-
-        </div>
-
-        {/* FILTERS */}
-        <div className="filters-bar">
-
-          <div className="search-box">
-            <FaSearch className="search-icon" />
-            <input type="text" placeholder="Rechercher une personne..." />
-          </div>
-
-          <select>
-            <option>Tous les sexes</option>
-            <option>Homme</option>
-            <option>Femme</option>
-          </select>
-
-          <select>
-            <option>Toutes nationalités</option>
-            <option>Malagasy</option>
-            <option>Française</option>
-          </select>
-
-        </div>
-
-        {/* TABLE */}
-        <table>
-          <thead>
-            <tr>
-              <th>CIN</th>
-              <th>Nom complet</th>
-              <th>Sexe</th>
-              <th>Nationalité</th>
-              <th>Statut</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {persons.map((person) => (
-              <tr key={person.id}>
-
-                <td>{person.national_id}</td>
-
-                <td>
-                  <div className="person-info">
-                    <div className="person-avatar">
-                      {person.first_name.charAt(0)}
-                    </div>
-
-                    <div>
-                      <h4>{person.first_name} {person.last_name}</h4>
-                      <span>ID: {person.id}</span>
-                    </div>
-                  </div>
-                </td>
-
-                <td>{person.gender}</td>
-                <td>{person.nationality}</td>
-
-                <td>
-                  <span className={person.status === "Actif" ? "status active" : "status inactive"}>
-                    {person.status}
-                  </span>
-                </td>
-
-                {/* ACTIONS PRO */}
-                <td>
-                  <div className="action-buttons">
-
-                    <button
-                      className="tooltip view-btn"
-                      onClick={() => {
-                        setSelectedPerson(person);
-                        setOpenView(true);
-                      }}
-                    >
-                      <FaEye />
-                      <span>Voir</span>
-                    </button>
-
-                    <button
-                      className="tooltip edit-btn"
-                      onClick={() => {
-                        setSelectedPerson(person);
-                        setOpenEdit(true);
-                      }}
-                    >
-                      <FaEdit />
-                      <span>Modifier</span>
-                    </button>
-
-                    <button
-                      className="tooltip delete-btn"
-                      onClick={() => {
-                        const ok = window.confirm(
-                          `Supprimer ${person.first_name} ${person.last_name} ?`
-                        );
-
-                        if (ok) {
-                          setPersons(persons.filter(p => p.id !== person.id));
-                        }
-                      }}
-                    >
-                      <FaTrash />
-                      <span>Supprimer</span>
-                    </button>
-
-                  </div>
-                </td>
-
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* PAGINATION */}
-        <div className="pagination">
-          <button>&lt;</button>
-
-          <div className="page-numbers">
-            {[...Array(totalPages)].map((_, i) => (
-              <span key={i}>{i + 1}</span>
-            ))}
-          </div>
-
-          <button>&gt;</button>
-        </div>
-
+        <div className="table-header"><div><h3>Liste des personnes</h3><span>Gestion complète des personnes enregistrées</span></div><button className="add-btn" onClick={openCreate}><FaPlus /> Ajouter une personne</button></div>
+        <div className="filters-bar"><div className="search-box"><FaSearch className="search-icon" /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher nom, CIN, téléphone..." /></div><select value={gender} onChange={(e) => setGender(e.target.value)}><option value="">Tous les sexes</option><option value="M">Masculin</option><option value="F">Féminin</option><option value="Homme">Homme</option><option value="Femme">Femme</option></select></div>
+        <table><thead><tr><th>ID</th><th>Nom complet</th><th>CIN</th><th>Téléphone</th><th>Sexe</th><th>Date naissance</th><th>Statut</th><th>Actions</th></tr></thead><tbody>
+          {!loading && persons.length === 0 && <tr><td colSpan="8" style={{ textAlign: "center", padding: 28 }}>Aucune personne trouvée</td></tr>}
+          {persons.map((p) => <tr key={p.id}><td>{p.id}</td><td><div className="person-info"><div className="person-avatar">{fullName(p).charAt(0)}</div><div><h4>{fullName(p)}</h4><span>{p.birth_place || p.birthPlace || "—"}</span></div></div></td><td>{nationalId(p)}</td><td>{phone(p)}</td><td>{p.gender || p.sexe || "—"}</td><td>{fmtDate(p.birth_date || p.birthDate)}</td><td><span className={(p.status || "active") === "active" ? "status active" : "status inactive"}>{p.status || "active"}</span></td><td><div className="action-buttons"><button className="view-btn" onClick={() => navigate(`/persons/${p.id}`)}><FaEye /></button><button className="edit-btn" onClick={() => openEdit(p)}><FaEdit /></button><button className="delete-btn" onClick={() => remove(p)}><FaTrash /></button></div></td></tr>)}
+        </tbody></table>
+        <div className="pagination"><span>Affichage de {persons.length} sur {number(total)} personnes</span></div>
       </div>
-
-      {/* ================= VIEW MODAL ================= */}
-      {openView && selectedPerson && (
-        <div className="modal-overlay">
-          <div className="modal-box">
-            <h3>Détails personne</h3>
-
-            <p><b>CIN:</b> {selectedPerson.national_id}</p>
-            <p><b>Nom:</b> {selectedPerson.first_name} {selectedPerson.last_name}</p>
-            <p><b>Sexe:</b> {selectedPerson.gender}</p>
-            <p><b>Nationalité:</b> {selectedPerson.nationality}</p>
-            <p><b>Statut:</b> {selectedPerson.status}</p>
-
-            <div className="modal-actions">
-              <button className="cancel-btn" onClick={() => setOpenView(false)}>
-                Fermer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================= EDIT MODAL ================= */}
-      {openEdit && selectedPerson && (
-        <div className="modal-overlay">
-          <div className="modal-box">
-
-            <h3>Modifier personne</h3>
-
-            <input defaultValue={selectedPerson.first_name} />
-            <input defaultValue={selectedPerson.last_name} />
-            <input defaultValue={selectedPerson.national_id} />
-
-            <div className="modal-actions">
-
-              <button className="cancel-btn" onClick={() => setOpenEdit(false)}>
-                Annuler
-              </button>
-
-              <button
-                className="save-btn"
-                onClick={() => alert("Modification enregistrée")}
-              >
-                Sauvegarder
-              </button>
-
-            </div>
-
-          </div>
-        </div>
-      )}
-
-      {/* MODAL AJOUT */}
-      {openModal && (
-        <div className="modal-overlay">
-          <div className="modal-box">
-
-            <h3>Ajouter une personne</h3>
-
-            <input placeholder="Nom" />
-            <input placeholder="Prénom" />
-            <input placeholder="CIN" />
-
-            <div className="modal-actions">
-
-              <button
-                className="cancel-btn"
-                onClick={() => setOpenModal(false)}
-              >
-                Annuler
-              </button>
-
-              <button className="save-btn">
-                Enregistrer
-              </button>
-
-            </div>
-
-          </div>
-        </div>
-      )}
-
+      {modal && <div className="modal-overlay"><div className="modal-box wide"><h3>{modal === "create" ? "Ajouter une personne" : "Modifier une personne"}</h3>{error && <div className="login-error">{error}</div>}<div className="form-grid"><input placeholder="Nom de famille" value={form.last_name || ""} onChange={(e) => setForm({ ...form, last_name: e.target.value })} /><input placeholder="Prénom" value={form.first_name || ""} onChange={(e) => setForm({ ...form, first_name: e.target.value })} /><input placeholder="CIN / Identifiant national" value={form.cin || ""} onChange={(e) => setForm({ ...form, cin: e.target.value })} /><input placeholder="Téléphone" value={form.phone || ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} /><input type="date" value={form.birth_date || ""} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} /><select value={form.gender || ""} onChange={(e) => setForm({ ...form, gender: e.target.value })}><option value="">Sexe</option><option value="M">Masculin</option><option value="F">Féminin</option></select><input placeholder="Lieu naissance" value={form.birth_place || ""} onChange={(e) => setForm({ ...form, birth_place: e.target.value })} /><input placeholder="Nationalité" value={form.nationality || ""} onChange={(e) => setForm({ ...form, nationality: e.target.value })} /></div><div className="modal-actions"><button className="cancel-btn" onClick={() => setModal(null)}>Annuler</button><button className="save-btn" onClick={save}>Enregistrer</button></div></div></div>}
     </>
   );
 }
