@@ -1,15 +1,35 @@
 import "../styles/dashboard.css";
+import snipLogo from "../assets/snipLogo1.png";
 import { useEffect, useMemo, useState } from "react";
 import Topbar from "../components/Topbar";
 import { dashboardApi } from "../services/api";
 import { number } from "../utils/format";
-import { FaUsers, FaFileAlt, FaCalendarAlt, FaUserShield } from "react-icons/fa";
+import {
+  FaUsers,
+  FaFileAlt,
+  FaCalendarAlt,
+  FaUserShield,
+  FaLink,
+  FaFolderOpen,
+  FaAddressBook,
+  FaClipboardList,
+  FaSearch,
+  FaEye,
+  FaPlus,
+  FaEdit,
+  FaTrash,
+  FaHistory,
+} from "react-icons/fa";
 
 const emptyStats = {
   persons: 0,
   documents: 0,
   events: 0,
   users: 0,
+  relationships: 0,
+  files: 0,
+  contacts: 0,
+  audit_logs: 0,
   recent_activities: [],
   persons_by_region: [],
 };
@@ -24,6 +44,114 @@ const chartColors = [
   "#db2777",
   "#64748b",
 ];
+
+const actionConfig = {
+  SEARCH: {
+    label: "Recherche",
+    icon: FaSearch,
+  },
+  READ: {
+    label: "Consultation",
+    icon: FaEye,
+  },
+  CREATE: {
+    label: "Création",
+    icon: FaPlus,
+  },
+  UPDATE: {
+    label: "Modification",
+    icon: FaEdit,
+  },
+  DELETE: {
+    label: "Suppression",
+    icon: FaTrash,
+  },
+};
+
+function formatDateTime(value) {
+  if (!value) return "";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toLocaleString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function timeAgo(value) {
+  if (!value) return "";
+
+  const date = new Date(value);
+  const now = new Date();
+
+  if (Number.isNaN(date.getTime())) return "";
+
+  const diffMs = now - date;
+  const diffMinutes = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMinutes < 1) return "À l’instant";
+  if (diffMinutes < 60) return `Il y a ${diffMinutes} min`;
+  if (diffHours < 24) return `Il y a ${diffHours} h`;
+  if (diffDays < 7) return `Il y a ${diffDays} j`;
+
+  return formatDateTime(value);
+}
+
+function formatTargetType(type) {
+  const labels = {
+    Person: "personne",
+    IdentityDocument: "document d’identité",
+    Relationship: "relation",
+    Event: "événement",
+    File: "fichier",
+    Address: "adresse",
+    Contact: "contact",
+    User: "utilisateur",
+    Role: "rôle",
+  };
+
+  return labels[type] || type || "élément";
+}
+
+function formatActivity(activity) {
+  const action = activity.action || activity.label || "ACTION";
+  const targetType = activity.target_type || activity.targetType || "Système";
+  const username =
+    activity.username ||
+    activity.user_name ||
+    activity.user?.username ||
+    activity.user?.full_name ||
+    "Utilisateur";
+
+  const config = actionConfig[action] || {
+    label: action,
+    icon: FaHistory,
+  };
+
+  const description =
+    activity.description ||
+    activity.details?.description ||
+    `${config.label} sur ${formatTargetType(targetType)}`;
+
+  return {
+    ...activity,
+    actionLabel: config.label,
+    Icon: config.icon,
+    username,
+    description,
+    targetLabel: formatTargetType(targetType),
+    relativeTime: timeAgo(activity.created_at || activity.createdAt),
+    fullDate: formatDateTime(activity.created_at || activity.createdAt),
+  };
+}
 
 export default function Dashboard() {
   const [stats, setStats] = useState(emptyStats);
@@ -57,6 +185,10 @@ export default function Dashboard() {
     ["Documents", stats.documents ?? stats.total_documents ?? 0, FaFileAlt],
     ["Événements", stats.events ?? stats.total_events ?? 0, FaCalendarAlt],
     ["Utilisateurs", stats.users ?? stats.total_users ?? 0, FaUserShield],
+    ["Relations", stats.relationships ?? stats.total_relationships ?? 0, FaLink],
+    ["Fichiers", stats.files ?? stats.total_files ?? 0, FaFolderOpen],
+    ["Contacts", stats.contacts ?? stats.total_contacts ?? 0, FaAddressBook],
+    ["Logs d’audit", stats.audit_logs ?? stats.total_audit_logs ?? 0, FaClipboardList],
   ];
 
   const regions = useMemo(() => {
@@ -90,13 +222,23 @@ export default function Dashboard() {
     return `conic-gradient(${parts.join(", ")})`;
   }, [regions, totalRegions]);
 
-  const activities = stats.recent_activities || stats.activities || [];
+  const activities = useMemo(() => {
+    const raw = stats.recent_activities || stats.activities || stats.audit_logs_recent || [];
+    return raw.slice(0, 8).map(formatActivity);
+  }, [stats]);
 
   return (
     <>
-      <Topbar title="Tableau de bord" />
+      <Topbar title="Tableau de bord SNIP" />
 
       <div className="dashboard-wrapper">
+        <div className="dashboard-title-section">
+        <div className="dashboard-title-content">
+          <img src={snipLogo} alt="SNIP" className="dashboard-title-logo" />
+          <h1>Système National d’Information sur les Personnes</h1>
+        </div>
+      </div>
+
         <div className="cards">
           {cards.map(([label, value, Icon]) => (
             <div className="card" key={label}>
@@ -111,26 +253,47 @@ export default function Dashboard() {
 
         <div className="content-grid">
           <div className="box">
-            <h3>Activités récentes</h3>
+            <div className="box-header">
+              <div>
+                <h3>Activités récentes</h3>
+                <p>Dernières actions journalisées</p>
+              </div>
+            </div>
 
-            <ul className="activities">
-              {loading && <li>Chargement des activités...</li>}
+            <ul className="activities pro-activities">
+              {loading && <li className="activity-empty">Chargement des activités...</li>}
 
               {!loading && activities.length === 0 && (
-                <li>Aucune activité récente</li>
+                <li className="activity-empty">Aucune activité récente</li>
               )}
 
               {!loading &&
-                activities.slice(0, 8).map((a, i) => (
-                  <li key={a.id || i}>
-                    {a.label || a.action || a.description || "Activité"}
+                activities.map((a, i) => (
+                  <li key={a.id || i} className="activity-item">
+                    <div className="activity-icon">
+                      <a.Icon />
+                    </div>
+
+                    <div className="activity-content">
+                      <div className="activity-line">
+                        <strong>{a.actionLabel}</strong>
+                        <span>{a.targetLabel}</span>
+                      </div>
+
+                      <p>{a.description}</p>
+
+                      <div className="activity-meta">
+                        <span>Par {a.username}</span>
+                        {a.relativeTime && <span>{a.relativeTime}</span>}
+                      </div>
+                    </div>
                   </li>
                 ))}
             </ul>
           </div>
 
           <div className="box">
-            <h3>Répartition par région</h3>
+            <h3>Répartition des personnes par région</h3>
 
             <div className="donut-area">
               <div
@@ -147,10 +310,7 @@ export default function Dashboard() {
                 {loading && <p className="empty-legend">Chargement...</p>}
 
                 {!loading && regions.length === 0 && (
-                  <p className="empty-legend">
-                    Aucune donnée régionale. Le graphe est prêt et affichera les
-                    régions dès que le backend renvoie `persons_by_region`.
-                  </p>
+                  <p className="empty-legend">Aucune donnée régionale disponible.</p>
                 )}
 
                 {!loading &&

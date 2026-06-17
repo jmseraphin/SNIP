@@ -70,9 +70,11 @@ export default function Topbar({ title }) {
 
   useEffect(() => {
     if (darkMode) {
+      document.documentElement.classList.add("dark-mode");
       document.body.classList.add("dark-mode");
       localStorage.setItem("snip_dark_mode", "true");
     } else {
+      document.documentElement.classList.remove("dark-mode");
       document.body.classList.remove("dark-mode");
       localStorage.setItem("snip_dark_mode", "false");
     }
@@ -177,7 +179,7 @@ export default function Topbar({ title }) {
             className="avatar-placeholder"
             onClick={() => setOpenMenu(!openMenu)}
           >
-            👤
+            {(t.adminUser || "Admin").charAt(0).toUpperCase()}
           </button>
 
           {openMenu && (

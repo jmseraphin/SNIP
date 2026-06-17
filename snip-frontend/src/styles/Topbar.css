@@ -1,16 +1,103 @@
 /* =========================
-   TOPBAR RIGHT
+   TOPBAR
 ========================= */
 
-.topbar-right {
+.topbar {
+  margin: 14px 20px 6px;
+  padding: 9px 14px;
+  min-height: 46px;
+
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  gap: 16px;
+
+  background: linear-gradient(135deg, #237134, #aac7bc);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  box-shadow: 0 8px 22px rgba(21, 101, 192, 0.22);
 }
 
 /* =========================
+   TITLE
+========================= */
+
+.topbar-title,
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.topbar h1,
+.topbar-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.title-icon {
+  font-size: 20px;
+  color: #ffffff;
+}
+
+/* =========================
+   TOPBAR RIGHT
+========================= */
+
+.topbar-right,
+.topbar-actions {
+  margin-left: auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+
+  background: transparent;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+}
+
+/* =========================
+   TOPBAR BUTTONS
+========================= */
+
+.topbar-btn {
+  width: 38px;
+  height: 38px;
+
+  border: none;
+  border-radius: 50%;
+
+  background: transparent;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  color: #ffffff;
+
+  transition: 0.25s ease;
+
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.topbar-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+/* =========================
    NOTIFICATION
 ========================= */
+
+.notification-wrapper {
+  position: relative;
+}
 
 .notification-box {
   position: relative;
@@ -18,9 +105,9 @@
   width: 34px;
   height: 34px;
 
-  border-radius: 10px;
+  border-radius: 50%;
 
-  background: #f8fafc;
+  background: transparent;
 
   display: flex;
   align-items: center;
@@ -32,13 +119,16 @@
 }
 
 .notification-box:hover {
-  background: #eef2ff;
-  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .bell-icon {
-  font-size: 17px;
-  color: #021b44;
+  display: block;
+  font-size: 15px;
+  color: #1f2937;
+  fill: #1f2937;
+  opacity: 1;
+  visibility: visible;
 }
 
 /* =========================
@@ -51,165 +141,27 @@
   top: -3px;
   right: -3px;
 
-  min-width: 16px;
-  height: 16px;
+  min-width: 14px;
+  height: 14px;
 
-  border-radius: 50%;
+  border-radius: 999px;
 
   background: #ef4444;
-  color: white;
+  color: #ffffff;
 
-  font-size: 10px;
-  font-weight: 700;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 2px;
-}
-
-/* =========================
-   USER MENU
-========================= */
-
-.user-menu {
-  position: relative;
-}
-
-/* =========================
-   AVATAR
-========================= */
-
-.avatar-placeholder {
-  width: 34px;
-  height: 34px;
-
-  border-radius: 50%;
-
-  background: #cbd5e1;
+  font-size: 9px;
+  font-weight: 900;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  font-size: 16px;
-
-  cursor: pointer;
-
-  transition: all 0.25s ease;
-}
-
-.avatar-placeholder:hover {
-  background: #94a3b8;
-  transform: scale(1.05);
-}
-
-/* =========================
-   DROPDOWN MENU
-========================= */
-
-.dropdown-menu {
-  position: absolute;
-
-  top: 44px;
-  right: 0;
-
-  width: 170px;
-
-  background: white;
-
-  border-radius: 14px;
-
-  padding: 12px;
-
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
-
-  z-index: 100;
-}
-
-/* =========================
-   DROPDOWN TEXT
-========================= */
-
-.dropdown-menu h4 {
-  font-size: 14px;
-  color: #021b44;
-
-  margin-bottom: 2px;
-}
-
-.dropdown-menu p {
-  font-size: 11px;
-  color: #64748b;
-
-  margin-bottom: 10px;
-}
-
-/* =========================
-   SEPARATOR
-========================= */
-
-.dropdown-menu hr {
-  border: none;
-  border-top: 1px solid #e2e8f0;
-
-  margin-bottom: 10px;
-}
-
-/* =========================
-   BUTTONS
-========================= */
-
-.dropdown-menu button {
-  width: 100%;
-
-  border: none;
-
-  background: transparent;
-
-  color: #021b44;
-
-  padding: 9px 10px;
-
-  border-radius: 8px;
-
-  cursor: pointer;
-
-  text-align: left;
-
-  font-size: 13px;
-  font-weight: 500;
-
-  transition: all 0.2s ease;
-}
-
-.dropdown-menu button:hover {
-  background: #f1f5f9;
-}
-
-/* =========================
-   TITLE
-========================= */
-
-.topbar-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.title-icon {
-  font-size: 20px;
-  color: #16a34a;
+  padding: 0 4px;
 }
 
 /* =========================
    NOTIFICATION DROPDOWN
 ========================= */
-
-.notification-wrapper {
-  position: relative;
-}
 
 .notification-dropdown {
   position: absolute;
@@ -219,13 +171,13 @@
 
   width: 240px;
 
-  background: white;
+  background: #ffffff;
 
   border-radius: 14px;
 
   padding: 14px;
 
-  box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
 
   z-index: 100;
 }
@@ -233,16 +185,16 @@
 .notification-dropdown h4 {
   font-size: 14px;
   color: #021b44;
-
   margin-bottom: 12px;
 }
 
 .notification-dropdown ul {
   list-style: none;
+  margin: 0;
+  padding: 0;
 
   display: flex;
   flex-direction: column;
-
   gap: 10px;
 }
 
@@ -264,79 +216,93 @@
 }
 
 /* =========================
-   TOPBAR BUTTONS
+   USER MENU
 ========================= */
 
-.topbar-btn {
-  width: 40px;
-  height: 40px;
+.user-menu {
+  position: relative;
+}
+
+/* =========================
+   AVATAR
+========================= */
+
+.avatar-placeholder {
+  width: 38px;
+  height: 38px;
 
   border: none;
+  border-radius: 50%;
 
-  border-radius: 10px;
-
-  background: #f8fafc;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
+  font-size: 16px;
+  font-weight: 900;
+
   cursor: pointer;
 
-  color: #021b44;
-
-  transition: 0.25s ease;
-
-  font-size: 12px;
-  font-weight: 600;
+  transition: all 0.25s ease;
 }
 
-.topbar-btn:hover {
-  background: #eef2ff;
-  transform: translateY(-2px);
+.avatar-placeholder:hover {
+  background: rgba(255, 255, 255, 0.28);
+  transform: scale(1.05);
 }
-
 /* =========================
-   DARK MODE
+   DROPDOWN MENU
 ========================= */
 
-.dark-mode {
-  background: #0f172a;
-  color: white;
+.dropdown-menu {
+  position: absolute;
+
+  top: 44px;
+  right: 0;
+
+  width: 170px;
+
+  background: #ffffff;
+
+  border-radius: 14px;
+
+  padding: 12px;
+
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+
+  z-index: 100;
 }
 
-.dark-mode .topbar,
-.dark-mode .card,
-.dark-mode .box,
-.dark-mode .dropdown-menu,
-.dark-mode .notification-dropdown {
-  background: #1e293b;
-  color: white;
+.dropdown-menu h4 {
+  font-size: 14px;
+  color: #021b44;
+  margin-bottom: 2px;
 }
 
-.dark-mode h2,
-.dark-mode h3,
-.dark-mode h4,
-.dark-mode p,
-.dark-mode li,
-.dark-mode button {
-  color: white;
+.dropdown-menu p {
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 10px;
 }
 
-.dark-mode .activities li {
-  background: #334155;
+.dropdown-menu hr {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin-bottom: 10px;
 }
 
-.dark-mode .graph-placeholder {
-  background: #334155;
-}
-
-
+.dropdown-menu button,
 .dropdown-link {
-
   display: block;
 
   width: 100%;
+
+  border: none;
+
+  background: transparent;
 
   text-decoration: none;
 
@@ -346,16 +312,83 @@
 
   border-radius: 8px;
 
-  font-size: 13px;
+  cursor: pointer;
 
+  text-align: left;
+
+  font-size: 13px;
   font-weight: 500;
 
-  transition: 0.2s ease;
-
+  transition: all 0.2s ease;
 }
 
+.dropdown-menu button:hover,
 .dropdown-link:hover {
-
   background: #f1f5f9;
+}
 
+/* =========================
+   DARK MODE
+========================= */
+
+.dark-mode {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.dark-mode .topbar,
+.dark-mode .dropdown-menu,
+.dark-mode .notification-dropdown {
+  background: linear-gradient(135deg, #065f46, #0f766e);
+  color: #ffffff;
+}
+
+.dark-mode .dropdown-menu h4,
+.dark-mode .dropdown-menu p,
+.dark-mode .dropdown-menu button,
+.dark-mode .dropdown-link,
+.dark-mode .notification-dropdown h4,
+.dark-mode .notification-dropdown li,
+.dark-mode .empty-notif {
+  color: #ffffff;
+}
+
+.dark-mode .notification-dropdown li {
+  background: #334155;
+}
+
+.dark-mode .dropdown-menu hr {
+  border-top-color: #334155;
+}
+
+.dark-mode .dropdown-menu button:hover,
+.dark-mode .dropdown-link:hover {
+  background: #334155;
+}
+
+.topbar .topbar-btn svg {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  color: #ffffff;
+  fill: #ffffff;
+  display: block;
+}
+
+.topbar .notification-box svg,
+.topbar .bell-icon {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  color: #ffffff;
+  fill: #ffffff;
+  display: block;
+}
+
+.topbar .topbar-btn,
+.topbar .notification-box {
+  width: 38px;
+  height: 38px;
 }
