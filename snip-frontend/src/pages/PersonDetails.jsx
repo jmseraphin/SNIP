@@ -1,35 +1,156 @@
 import "../styles/persons.css";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Topbar from "../components/Topbar";
 import { personsApi } from "../services/api";
 import { fmtDate, fullName, nationalId, phone } from "../utils/format";
+import {
+  FaArrowLeft,
+  FaUser,
+  FaIdCard,
+  FaPhone,
+  FaCalendarAlt,
+  FaMapMarkerAlt,
+  FaFlag,
+  FaVenusMars,
+  FaInfoCircle,
+} from "react-icons/fa";
 
 export default function PersonDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
+
   const [person, setPerson] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { personsApi.get(id).then(setPerson).catch(() => setPerson(null)).finally(() => setLoading(false)); }, [id]);
+  const load = async () => {
+    try {
+      setLoading(true);
+      const res = await personsApi.get(id);
+      setPerson(res.data || res.person || res);
+    } catch {
+      setPerson(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if (loading) return <><Topbar title="Détail personne" /><div className="table-box">Chargement...</div></>;
-  if (!person) return <><Topbar title="Détail personne" /><div className="table-box">Personne introuvable ou backend non connecté.</div></>;
-
-  const docs = person.documents || person.identity_documents || [];
-  const addresses = person.addresses || [];
-  const contacts = person.contacts || [];
-  const relations = person.relationships || person.relations || [];
-  const events = person.events || [];
-  const files = person.files || [];
+  useEffect(() => {
+    load();
+  }, [id]);
 
   return (
     <>
-      <Topbar title="Détail personne" />
-      <div className="table-box person-details">
-        <div className="person-header"><div className="person-avatar big">{fullName(person).charAt(0)}</div><div><h2>{fullName(person)}</h2><p>CIN : {nationalId(person)}</p><p>Nationalité : {person.nationality || "—"}</p></div></div>
-        <div className="tabs"><button>Informations</button><button>Documents</button><button>Adresses</button><button>Contacts</button><button>Relations</button><button>Événements</button><button>Fichiers</button></div>
-        <div className="details-grid"><div className="details-box"><h3>Informations personnelles</h3><p><b>ID :</b> {person.id}</p><p><b>Nom complet :</b> {fullName(person)}</p><p><b>Téléphone :</b> {phone(person)}</p><p><b>Sexe :</b> {person.gender || person.sexe || "—"}</p><p><b>Date naissance :</b> {fmtDate(person.birth_date || person.birthDate)}</p><p><b>Lieu naissance :</b> {person.birth_place || person.birthPlace || "—"}</p><p><b>Statut :</b> {person.status || "—"}</p></div><div className="details-box"><h3>Informations liées</h3><p><b>Documents :</b> {docs.length}</p><p><b>Adresses :</b> {addresses.length}</p><p><b>Contacts :</b> {contacts.length}</p><p><b>Relations :</b> {relations.length}</p><p><b>Événements :</b> {events.length}</p><p><b>Fichiers :</b> {files.length}</p></div></div>
+      <Topbar title="Détails de la personne" />
+
+      <div className="person-details-page">
+        <button className="back-btn" onClick={() => navigate("/persons")}>
+          <FaArrowLeft /> Retour aux personnes
+        </button>
+
+        {loading && (
+          <div className="details-card">
+            <p>Chargement des informations...</p>
+          </div>
+        )}
+
+        {!loading && !person && (
+          <div className="details-card">
+            <h3>Personne introuvable</h3>
+            <p>Aucune donnée disponible pour cette personne.</p>
+          </div>
+        )}
+
+        {!loading && person && (
+          <div className="details-card pro-details">
+            <div className="details-header">
+              <div className="details-avatar">
+                {fullName(person).charAt(0).toUpperCase()}
+              </div>
+
+              <div>
+                <h2>{fullName(person)}</h2>
+                <p>Fiche individuelle enregistrée dans le système SNIP</p>
+              </div>
+
+              <span
+                className={
+                  (person.status || "active") === "active"
+                    ? "status active"
+                    : "status inactive"
+                }
+              >
+                {person.status || "active"}
+              </span>
+            </div>
+
+            <div className="details-grid">
+              <Info
+                icon={<FaIdCard />}
+                label="CIN / Identifiant national"
+                value={nationalId(person)}
+              />
+
+              <Info
+                icon={<FaPhone />}
+                label="Téléphone"
+                value={phone(person)}
+              />
+
+              <Info
+                icon={<FaVenusMars />}
+                label="Sexe"
+                value={person.gender || person.sexe || "—"}
+              />
+
+              <Info
+                icon={<FaCalendarAlt />}
+                label="Date de naissance"
+                value={fmtDate(person.birth_date || person.birthDate)}
+              />
+
+              <Info
+                icon={<FaMapMarkerAlt />}
+                label="Lieu de naissance"
+                value={person.birth_place || person.birthPlace || "—"}
+              />
+
+              <Info
+                icon={<FaFlag />}
+                label="Nationalité"
+                value={person.nationality || "—"}
+              />
+
+              <Info icon={<FaUser />} label="Nom" value={person.last_name || "—"} />
+
+              <Info
+                icon={<FaUser />}
+                label="Prénom"
+                value={person.first_name || "—"}
+              />
+
+              <Info
+                icon={<FaInfoCircle />}
+                label="Identifiant système"
+                value={person.id || "—"}
+                wide
+              />
+            </div>
+          </div>
+        )}
       </div>
     </>
+  );
+}
+
+function Info({ icon, label, value, wide }) {
+  return (
+    <div className={wide ? "info-card wide-info" : "info-card"}>
+      <div className="info-icon">{icon}</div>
+      <div>
+        <span>{label}</span>
+        <strong>{value}</strong>
+      </div>
+    </div>
   );
 }

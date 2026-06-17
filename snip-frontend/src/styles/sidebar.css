@@ -1,6 +1,6 @@
 .sidebar {
 
-  width: 220px;
+  width: 260px;
 
   height: 100vh;
 
@@ -331,37 +331,23 @@
 ========================= */
 
 .toggle-btn {
-
-  width: 32px;
-
-  height: 32px;
-
   border: none;
-
-  border-radius: 8px;
-
+  background: transparent;
+  box-shadow: none;
   cursor: pointer;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
-  font-size: 14px;
-
   color: white;
+  font-size: 20px;
 
-  background: rgba(255,255,255,0.10);
-
-  transition: 0.3s;
-
+  padding: 0;
 }
 
 .toggle-btn:hover {
-
-  background: rgba(255,255,255,0.20);
-
+  background: transparent;
 }
 
 /* HEADER */
@@ -382,7 +368,7 @@
 
 .menu-link span {
 
-  font-size: 14px;
+  font-size: 16px;
 
   white-space: nowrap;
 
