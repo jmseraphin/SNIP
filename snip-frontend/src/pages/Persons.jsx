@@ -1,5 +1,5 @@
 import "../styles/persons.css";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Topbar from "../components/Topbar";
 import { personsApi } from "../services/api";
@@ -43,7 +43,7 @@ export default function Persons() {
   const load = async () => {
     try {
       setLoading(true);
-      const res = await personsApi.list({ q: query, gender });
+      const res = await personsApi.list({ page: 1, limit: 100 });
       setPersons(res.data || []);
       setTotal(res.total || 0);
     } catch {
@@ -58,10 +58,43 @@ export default function Persons() {
     load();
   }, []);
 
-  useEffect(() => {
-    const timer = setTimeout(load, 350);
-    return () => clearTimeout(timer);
-  }, [query, gender]);
+  const filteredPersons = useMemo(() => {
+    const keyword = String(query || "").toLowerCase().trim();
+
+    return persons.filter((p) => {
+      const matchGender = gender
+        ? String(p.gender || p.sexe || "").toLowerCase() === gender.toLowerCase()
+        : true;
+
+      const values = [
+        p.id,
+        p.last_name,
+        p.first_name,
+        p.nom,
+        p.prenom,
+        p.full_name,
+        p.name,
+        p.cin,
+        p.passport_number,
+        p.phone,
+        p.telephone,
+        p.email,
+        p.birth_place,
+        p.nationality,
+        p.status,
+        fullName(p),
+        nationalId(p),
+        phone(p),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      const matchKeyword = keyword ? values.includes(keyword) : true;
+
+      return matchKeyword && matchGender;
+    });
+  }, [persons, query, gender]);
 
   const openCreate = () => {
     setForm(emptyForm);
@@ -184,7 +217,7 @@ export default function Persons() {
                   </tr>
                 )}
 
-                {!loading && persons.length === 0 && (
+                {!loading && filteredPersons.length === 0 && (
                   <tr>
                     <td colSpan="7" className="empty-row">
                       Aucune personne trouvée
@@ -193,7 +226,7 @@ export default function Persons() {
                 )}
 
                 {!loading &&
-                  persons.map((p) => (
+                  filteredPersons.map((p) => (
                     <tr key={p.id}>
                       <td>
                         <div className="person-info">
@@ -274,7 +307,7 @@ export default function Persons() {
 
           <div className="pagination">
             <span>
-              Affichage de {persons.length} sur {number(total)} personnes
+              Affichage de {filteredPersons.length} sur {number(total)} personnes
             </span>
           </div>
         </div>

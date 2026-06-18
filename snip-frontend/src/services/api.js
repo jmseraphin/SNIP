@@ -403,5 +403,43 @@ export const relationshipsApi = {
     });
   },
 };
+export const identityDocumentsApi = {
+  async list(params = {}) {
+    return normalize(
+      await request(`/identity-documents${toQuery(params)}`),
+      ["identity_documents", "identityDocuments", "documents"]
+    );
+  },
 
+  async listByPerson(personId, params = {}) {
+    return normalize(
+      await request(`/identity-documents/person/${personId}${toQuery(params)}`),
+      ["identity_documents", "identityDocuments", "documents"]
+    );
+  },
+
+  get(id) {
+    return request(`/identity-documents/${id}`);
+  },
+
+  create(payload) {
+    return request("/identity-documents", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  update(id, payload) {
+    return request(`/identity-documents/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  remove(id) {
+    return request(`/identity-documents/${id}`, {
+      method: "DELETE",
+    });
+  },
+};
 export { API_BASE_URL, getToken, clearToken, toQuery, normalize, extractArray };

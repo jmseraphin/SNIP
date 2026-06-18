@@ -9,7 +9,7 @@
 
 .relationship-stat-card {
   width: 250px;
-  background: #fff;
+  background: #ffffff;
   border: 1px solid #eef2f7;
   border-radius: 18px;
   padding: 15px 16px;
@@ -24,7 +24,7 @@
   height: 40px;
   border-radius: 14px;
   background: linear-gradient(135deg, #335979, #7da0b8);
-  color: #fff;
+  color: #ffffff;
   display: grid;
   place-items: center;
 }
@@ -43,16 +43,16 @@
 }
 
 .relationships-table-box {
-  background: #fff;
+  background: #ffffff;
   border: 1px solid #eef2f7;
   border-radius: 20px;
   padding: 17px;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
 }
 
-.relationships-table-header,
-.relationships-filters {
+.relationships-table-header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 14px;
   margin-bottom: 14px;
@@ -71,17 +71,45 @@
 }
 
 .relationship-add-btn {
+  width: auto;
+  min-width: auto;
+  height: 36px;
+  padding: 0 13px;
   border: none;
-  background: linear-gradient(135deg, #335979, #7da0b8);
-  color: #fff;
   border-radius: 12px;
-  padding: 7px 12px;
+  background: linear-gradient(135deg, #335979, #7da0b8);
+  color: #ffffff;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 900;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
   cursor: pointer;
+  white-space: nowrap;
+  margin-left: auto;
+  box-shadow: 0 8px 18px rgba(51, 89, 121, 0.22);
+  transition: 0.18s ease;
+}
+
+.relationship-add-btn svg {
+  font-size: 12px;
+}
+
+.relationship-add-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(51, 89, 121, 0.28);
+}
+
+.relationship-add-btn:active {
+  transform: translateY(0);
+}
+
+.relationships-filters {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
 }
 
 .relationships-search-box {
@@ -119,6 +147,12 @@
   max-width: 190px;
 }
 
+.relationships-search-box input:focus,
+.relationships-filters select:focus {
+  border-color: #335979;
+  box-shadow: 0 0 0 4px rgba(51, 89, 121, 0.12);
+}
+
 .relationships-table-responsive {
   overflow-x: auto;
 }
@@ -141,7 +175,7 @@
 
 .relationships-table td {
   padding: 10px 11px;
-  background: #fff;
+  background: #ffffff;
   border-top: 1px solid #f1f5f9;
   border-bottom: 1px solid #f1f5f9;
   font-size: 12.4px;
@@ -187,6 +221,11 @@
   border: none;
   border-radius: 10px;
   cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.relationship-icon-action:hover {
+  transform: translateY(-1px);
 }
 
 .relationship-icon-action svg {
@@ -229,143 +268,241 @@
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: rgba(15, 23, 42, 0.35);
-  display: grid;
-  place-items: center;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
 }
 
 .relationships-modal-box {
-  width: min(760px, calc(100% - 30px));
-  background: #fff;
-  border-radius: 20px;
-  padding: 20px;
   position: relative;
-  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.22);
-  max-height: 90vh;
+  width: min(860px, 96vw);
+  max-height: 92vh;
   overflow-y: auto;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.35);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  animation: relationshipModalIn 0.22s ease-out;
+}
+
+@keyframes relationshipModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.relationships-modal-box h3 {
+  margin: 0 0 22px;
+  font-size: 24px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.4px;
+  padding-right: 44px;
+}
+
+.relationships-modal-box h3::after {
+  content: "";
+  display: block;
+  width: 70px;
+  height: 4px;
+  margin-top: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #335979, #7da0b8);
 }
 
 .relationships-modal-close {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 20px;
+  right: 20px;
+  width: 38px;
+  height: 38px;
   border: none;
+  border-radius: 14px;
   background: #f1f5f9;
   color: #334155;
-  width: 31px;
-  height: 31px;
-  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.relationships-modal-close:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  transform: rotate(90deg);
 }
 
 .relationships-modal-close svg {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.relationships-modal-box h3 {
-  margin: 0 0 16px;
-  font-size: 18px;
-  font-weight: 900;
+  font-size: 14px;
 }
 
 .relationships-error {
-  margin-bottom: 12px;
-  background: #fee2e2;
-  color: #991b1b;
-  border-radius: 12px;
-  padding: 10px 12px;
-  font-size: 12.5px;
+  grid-column: 1 / -1;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 13px;
   font-weight: 700;
+  margin-bottom: 14px;
 }
 
 .relationships-form-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
 }
 
-.relationships-form-grid input,
-.relationships-form-grid select,
-.relationships-form-grid textarea {
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 0 12px;
-  min-height: 41px;
+.relationship-field,
+.relationship-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.relationship-field label,
+.relationship-picker label,
+.relationship-date-label {
+  display: block;
+  visibility: visible;
+  opacity: 1;
+  font-size: 13px;
+  font-weight: 900;
+  color: #0f172a;
+  margin-bottom: 2px;
+}
+
+.relationship-field input,
+.relationship-field select,
+.relationship-field textarea,
+.relationship-picker input {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 14px;
   outline: none;
-  font-size: 12.5px;
+  transition: 0.18s ease;
   box-sizing: border-box;
 }
 
-.relationships-form-grid textarea {
-  grid-column: span 2;
-  min-height: 90px;
-  padding-top: 11px;
+.relationship-field input:focus,
+.relationship-field select:focus,
+.relationship-field textarea:focus,
+.relationship-picker input:focus {
+  border-color: #335979;
+  box-shadow: 0 0 0 4px rgba(51, 89, 121, 0.13);
+}
+
+.relationship-field textarea {
+  min-height: 105px;
   resize: vertical;
 }
 
+.relationship-field-wide {
+  grid-column: 1 / -1;
+}
+
+.relationship-date-field {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.relationship-date-field input {
+  background: #ffffff;
+}
+
 .relationship-picker-list {
-  margin-top: 8px;
-  max-height: 185px;
+  max-height: 210px;
   overflow-y: auto;
   border: 1px solid #e2e8f0;
-  background: #fff;
-  border-radius: 14px;
-  padding: 6px;
+  border-radius: 16px;
+  background: #f8fafc;
+  padding: 8px;
 }
 
 .relationship-picker-item {
   width: 100%;
   border: none;
   background: transparent;
-  padding: 9px 10px;
-  border-radius: 10px;
+  border-radius: 12px;
+  padding: 10px 12px;
   text-align: left;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+  transition: 0.18s ease;
 }
 
-.relationship-picker-item:hover,
-.relationship-picker-item.active {
+.relationship-picker-item:hover {
   background: #e0f2fe;
 }
 
-.relationship-picker-item strong {
-  font-size: 12.5px;
-  color: #0f172a;
+.relationship-picker-item.active {
+  background: #335979;
+  color: #ffffff;
 }
 
-.relationship-picker-item span,
-.relationship-picker-empty {
-  font-size: 11px;
+.relationship-picker-item strong {
+  font-size: 14px;
+  font-weight: 900;
+  color: inherit;
+}
+
+.relationship-picker-item span {
+  font-size: 12px;
   color: #64748b;
+}
+
+.relationship-picker-item.active span {
+  color: #dbeafe;
 }
 
 .relationship-picker-empty {
   padding: 12px;
+  font-size: 13px;
+  color: #64748b;
   text-align: center;
 }
 
 .relationships-modal-actions {
+  margin-top: 24px;
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 16px;
+  gap: 12px;
+  padding-top: 18px;
+  border-top: 1px solid #e2e8f0;
 }
 
 .relationships-cancel-btn,
 .relationships-save-btn {
+  min-height: 44px;
   border: none;
-  border-radius: 12px;
-  padding: 10px 14px;
-  font-size: 12.5px;
+  border-radius: 14px;
+  padding: 0 20px;
+  font-size: 14px;
   font-weight: 900;
   cursor: pointer;
+  transition: 0.18s ease;
 }
 
 .relationships-cancel-btn {
@@ -373,49 +510,82 @@
   color: #334155;
 }
 
+.relationships-cancel-btn:hover {
+  background: #e2e8f0;
+}
+
 .relationships-save-btn {
-  background: #335979;
-  color: #fff;
+  background: linear-gradient(135deg, #335979, #7da0b8);
+  color: #ffffff;
+  box-shadow: 0 12px 24px rgba(51, 89, 121, 0.22);
+}
+
+.relationships-save-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 30px rgba(51, 89, 121, 0.28);
+}
+
+.relationships-save-btn:disabled,
+.relationships-cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .relationship-detail-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .relationship-info-card {
   background: #f8fafc;
-  border: 1px solid #eef2f7;
-  border-radius: 14px;
-  padding: 13px;
-}
-
-.relationship-info-wide {
-  grid-column: span 2;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 16px;
 }
 
 .relationship-info-card span {
   display: block;
-  font-size: 11.5px;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   color: #64748b;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .relationship-info-card strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 900;
   color: #0f172a;
-  font-size: 13px;
+  word-break: break-word;
+}
+
+.relationship-info-wide {
+  grid-column: 1 / -1;
 }
 
 @media (max-width: 800px) {
-  .relationships-form-grid,
-  .relationship-detail-grid {
-    grid-template-columns: 1fr;
+  .relationships-page {
+    width: calc(100% - 24px);
+    margin: 12px;
   }
 
-  .relationships-form-grid textarea,
-  .relationship-info-wide {
-    grid-column: span 1;
+  .relationship-stat-card {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .relationships-table-header {
+    align-items: flex-start;
+  }
+
+  .relationship-add-btn {
+    height: 34px;
+    padding: 0 12px;
+    font-size: 11.5px;
+    border-radius: 10px;
   }
 
   .relationships-filters {
@@ -425,4 +595,73 @@
   .relationships-filters select {
     max-width: 100%;
   }
+
+  .relationships-modal-overlay {
+    padding: 12px;
+    align-items: flex-start;
+  }
+
+  .relationships-modal-box {
+    width: 100%;
+    max-height: 95vh;
+    border-radius: 20px;
+    padding: 22px;
+  }
+
+  .relationships-form-grid,
+  .relationship-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .relationship-field-wide,
+  .relationship-info-wide {
+    grid-column: 1;
+  }
+
+  .relationships-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .relationships-cancel-btn,
+  .relationships-save-btn {
+    width: 100%;
+  }
+}
+
+.relationship-picker-item {
+  color: #0f172a;
+}
+
+.relationship-picker-item strong {
+  color: #0f172a;
+}
+
+.relationship-picker-item span {
+  color: #475569;
+}
+
+.relationship-picker-item:hover {
+  background: #e0f2fe;
+  color: #0f172a;
+}
+
+.relationship-picker-item:hover strong {
+  color: #0f172a;
+}
+
+.relationship-picker-item:hover span {
+  color: #475569;
+}
+
+.relationship-picker-item.active {
+  background: #e0f2fe;
+  color: #0f172a;
+}
+
+.relationship-picker-item.active strong {
+  color: #0f172a;
+}
+
+.relationship-picker-item.active span {
+  color: #475569;
 }
