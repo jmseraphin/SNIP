@@ -47,6 +47,7 @@ async function request(path, options = {}) {
         data?.message ||
         "Erreur de communication avec le backend."
     );
+
     error.status = response.status;
     error.data = data;
     throw error;
@@ -77,6 +78,7 @@ function normalize(payload, listKeys = []) {
   }
 
   const key = listKeys.find((k) => Array.isArray(payload?.[k]));
+
   const data = key
     ? payload[key]
     : payload?.data || payload?.items || payload?.results || [];
@@ -209,6 +211,19 @@ export const auditApi = {
     return normalize(await request(`/audit/logs${toQuery(params)}`), ["logs"]);
   },
 
+  async listByTarget(targetType, targetId, params = {}) {
+    return normalize(
+      await request(
+        `/audit/logs${toQuery({
+          target_type: targetType,
+          target_id: targetId,
+          ...params,
+        })}`
+      ),
+      ["logs"]
+    );
+  },
+
   stats() {
     return request("/audit/stats");
   },
@@ -295,6 +310,7 @@ export const filesApi = {
 
   upload(personId, formData) {
     formData.set("person_id", personId);
+
     return request("/files/upload", {
       method: "POST",
       body: formData,
@@ -304,62 +320,6 @@ export const filesApi = {
   remove(id) {
     return request(`/files/${id}`, {
       method: "DELETE",
-    });
-  },
-};
-
-export const dashboardApi = {
-  async summary() {
-    const safe = async (fn, fallback) => {
-      try {
-        return await fn();
-      } catch {
-        return fallback;
-      }
-    };
-
-    const [persons, users, events, audit] = await Promise.all([
-      safe(() => personsApi.list({ page: 1, limit: 1 }), {
-        total: 0,
-        data: [],
-      }),
-      safe(() => usersApi.list({ page: 1, limit: 1 }), {
-        total: 0,
-        data: [],
-      }),
-      safe(() => eventsApi.list({ limit: 200 }), {
-        total: 0,
-        data: [],
-      }),
-      safe(() => auditApi.stats(), {
-        stats: {},
-        recentActivities: [],
-        actionsByDay: [],
-      }),
-    ]);
-
-    return {
-      persons: persons.total || 0,
-      users: users.total || 0,
-      documents: 0,
-      events: events.total || 0,
-      recent_activities: audit.recentActivities || [],
-      actions_by_day: audit.actionsByDay || [],
-      persons_by_region: [],
-      audit_stats: audit.stats || {},
-    };
-  },
-};
-
-export const searchApi = {
-  async global(q) {
-    return personsApi.list({
-      q,
-      search: q,
-      query: q,
-      keyword: q,
-      page: 1,
-      limit: 50,
     });
   },
 };
@@ -403,6 +363,7 @@ export const relationshipsApi = {
     });
   },
 };
+
 export const identityDocumentsApi = {
   async list(params = {}) {
     return normalize(
@@ -442,4 +403,145 @@ export const identityDocumentsApi = {
     });
   },
 };
+
+export const addressesApi = {
+  async list(params = {}) {
+    return normalize(
+      await request(`/addresses${toQuery(params)}`),
+      ["addresses"]
+    );
+  },
+
+  async listByPerson(personId, params = {}) {
+    return normalize(
+      await request(`/addresses/person/${personId}${toQuery(params)}`),
+      ["addresses"]
+    );
+  },
+
+  get(id) {
+    return request(`/addresses/${id}`);
+  },
+
+  create(payload) {
+    return request("/addresses", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  update(id, payload) {
+    return request(`/addresses/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  remove(id) {
+    return request(`/addresses/${id}`, {
+      method: "DELETE",
+    });
+  },
+};
+
+export const contactsApi = {
+  async list(params = {}) {
+    return normalize(
+      await request(`/contacts${toQuery(params)}`),
+      ["contacts"]
+    );
+  },
+
+  async listByPerson(personId, params = {}) {
+    return normalize(
+      await request(`/contacts/person/${personId}${toQuery(params)}`),
+      ["contacts"]
+    );
+  },
+
+  get(id) {
+    return request(`/contacts/${id}`);
+  },
+
+  create(payload) {
+    return request("/contacts", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  update(id, payload) {
+    return request(`/contacts/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  remove(id) {
+    return request(`/contacts/${id}`, {
+      method: "DELETE",
+    });
+  },
+};
+
+export const dashboardApi = {
+  async summary() {
+    const safe = async (fn, fallback) => {
+      try {
+        return await fn();
+      } catch {
+        return fallback;
+      }
+    };
+
+    const [persons, users, events, audit, documents] = await Promise.all([
+      safe(() => personsApi.list({ page: 1, limit: 1 }), {
+        total: 0,
+        data: [],
+      }),
+      safe(() => usersApi.list({ page: 1, limit: 1 }), {
+        total: 0,
+        data: [],
+      }),
+      safe(() => eventsApi.list({ limit: 200 }), {
+        total: 0,
+        data: [],
+      }),
+      safe(() => auditApi.stats(), {
+        stats: {},
+        recentActivities: [],
+        actionsByDay: [],
+      }),
+      safe(() => identityDocumentsApi.list({ page: 1, limit: 1 }), {
+        total: 0,
+        data: [],
+      }),
+    ]);
+
+    return {
+      persons: persons.total || 0,
+      users: users.total || 0,
+      documents: documents.total || 0,
+      events: events.total || 0,
+      recent_activities: audit.recentActivities || [],
+      actions_by_day: audit.actionsByDay || [],
+      persons_by_region: [],
+      audit_stats: audit.stats || {},
+    };
+  },
+};
+
+export const searchApi = {
+  async global(q) {
+    return personsApi.list({
+      q,
+      search: q,
+      query: q,
+      keyword: q,
+      page: 1,
+      limit: 50,
+    });
+  },
+};
+
 export { API_BASE_URL, getToken, clearToken, toQuery, normalize, extractArray };

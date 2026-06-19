@@ -1,7 +1,7 @@
 import "../styles/documents.css";
 import { useEffect, useMemo, useState } from "react";
 import Topbar from "../components/Topbar";
-import { personsApi } from "../services/api";
+import { identityDocumentsApi, personsApi } from "../services/api";
 import { fmtDate, number } from "../utils/format";
 import {
   FaIdCard,
@@ -10,127 +10,190 @@ import {
   FaSave,
   FaTimes,
   FaPlus,
+  FaSyncAlt,
 } from "react-icons/fa";
 
 const emptyForm = {
+  id: "",
   person_id: "",
-  document_type: "CIN",
-  cin: "",
-  passport_number: "",
+  type: "CIN",
+  number: "",
   issued_by: "",
   issue_date: "",
   expiry_date: "",
   is_valid: true,
 };
 
+function personName(p) {
+  if (!p) return "—";
+
+  return (
+    `${p.last_name || p.nom || ""} ${p.first_name || p.prenom || ""}`.trim() ||
+    p.full_name ||
+    p.fullName ||
+    p.name ||
+    "Personne sans nom"
+  );
+}
+
+function getDocId(doc) {
+  return doc.id || doc.document_id || doc.identity_document_id || "";
+}
+
+function getDocPersonId(doc) {
+  return doc.person_id || doc.personId || doc.person?.id || "";
+}
+
+function getDocPersonName(doc, persons = []) {
+  if (doc.person_name) return doc.person_name;
+  if (doc.personName) return doc.personName;
+  if (doc.full_name) return doc.full_name;
+  if (doc.fullName) return doc.fullName;
+  if (doc.person) return personName(doc.person);
+
+  const personId = getDocPersonId(doc);
+  const found = persons.find((p) => String(p.id) === String(personId));
+
+  return found ? personName(found) : personId || "—";
+}
+
+function getDocType(doc) {
+  return doc.type || doc.document_type || doc.documentType || "—";
+}
+
+function getDocNumber(doc) {
+  return (
+    doc.number ||
+    doc.document_number ||
+    doc.documentNumber ||
+    doc.cin ||
+    doc.passport_number ||
+    doc.passportNumber ||
+    "—"
+  );
+}
+
+function getDocIssuedBy(doc) {
+  return doc.issued_by || doc.issuedBy || doc.issuer || "—";
+}
+
+function getDocIssueDate(doc) {
+  return doc.issue_date || doc.issueDate || doc.issued_at || doc.issuedAt || "";
+}
+
+function getDocExpiryDate(doc) {
+  return (
+    doc.expiry_date ||
+    doc.expiryDate ||
+    doc.expires_at ||
+    doc.expiresAt ||
+    ""
+  );
+}
+
+function getDocValidity(doc) {
+  if (doc.is_valid === true || doc.isValid === true) return true;
+  if (doc.is_valid === false || doc.isValid === false) return false;
+  return null;
+}
+
+function normalizeType(type) {
+  if (!type) return "CIN";
+
+  const value = String(type).toUpperCase();
+
+  if (value === "PASSEPORT") return "PASSPORT";
+  if (value === "PASSPORT") return "PASSPORT";
+
+  return value;
+}
+
+function displayType(type) {
+  const value = normalizeType(type);
+
+  if (value === "PASSPORT") return "Passeport";
+  if (value === "CIN") return "CIN";
+
+  return type || "—";
+}
+
 export default function Documents() {
+  const [documents, setDocuments] = useState([]);
   const [persons, setPersons] = useState([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
+  const [ready, setReady] = useState(true);
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [personSearch, setPersonSearch] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const personName = (p) =>
-    `${p.last_name || p.nom || ""} ${p.first_name || p.prenom || ""}`.trim() ||
-    p.full_name ||
-    p.name ||
-    "Personne sans nom";
-
-  const getPerson = (id) =>
-    persons.find((person) => String(person.id) === String(id));
-
-  const buildDocuments = (people) => {
-    const list = [];
-
-    people.forEach((p) => {
-      if (p.cin) {
-        list.push({
-          id: `${p.id}-cin`,
-          person: p,
-          type: "CIN",
-          number: p.cin,
-          issued_by: p.issued_by || "—",
-          issue_date: p.issue_date || null,
-          expiry_date: p.expiry_date || null,
-          is_valid: p.is_valid ?? true,
-          raw: p,
-        });
-      }
-
-      if (p.passport_number) {
-        list.push({
-          id: `${p.id}-passport`,
-          person: p,
-          type: "Passeport",
-          number: p.passport_number,
-          issued_by: p.passport_issued_by || p.issued_by || "—",
-          issue_date: p.passport_issue_date || p.issue_date || null,
-          expiry_date: p.passport_expiry_date || p.expiry_date || null,
-          is_valid: p.passport_is_valid ?? p.is_valid ?? true,
-          raw: p,
-        });
-      }
-    });
-
-    return list;
-  };
-
-  const loadPersons = async () => {
+  async function loadDocuments() {
     try {
       setLoading(true);
+      setReady(true);
       setError("");
 
-      const response = await personsApi.list({
+      const response = await identityDocumentsApi.list({
         page: 1,
-        limit: 100,
+        limit: 200,
       });
 
-      setPersons(response.data || []);
-    } catch (e) {
-      setPersons([]);
-      setError(e.message || "Erreur lors du chargement des personnes.");
+      setDocuments(response?.data || []);
+    } catch {
+      setDocuments([]);
+      setReady(false);
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  async function loadPersons() {
+    try {
+      const response = await personsApi.list({
+        page: 1,
+        limit: 200,
+      });
+
+      setPersons(response?.data || []);
+    } catch {
+      setPersons([]);
+    }
+  }
 
   useEffect(() => {
+    loadDocuments();
     loadPersons();
   }, []);
 
-  const documents = useMemo(() => {
-    const list = buildDocuments(persons);
+  const filteredDocuments = useMemo(() => {
     const keyword = String(q || "").toLowerCase().trim();
 
-    if (!keyword) return list;
+    if (!keyword) return documents;
 
-    return list.filter((d) =>
-      [
-        d.type,
-        d.number,
-        d.issued_by,
-        d.issue_date,
-        d.expiry_date,
-        personName(d.person),
-        d.person?.id,
-        d.person?.cin,
-        d.person?.phone,
-        d.person?.email,
+    return documents.filter((doc) => {
+      const values = [
+        getDocType(doc),
+        getDocNumber(doc),
+        getDocIssuedBy(doc),
+        getDocIssueDate(doc),
+        getDocExpiryDate(doc),
+        getDocPersonId(doc),
+        getDocPersonName(doc, persons),
       ]
         .filter(Boolean)
         .join(" ")
-        .toLowerCase()
-        .includes(keyword)
-    );
-  }, [persons, q]);
+        .toLowerCase();
 
-  const filteredPersonsForPicker = (keyword) => {
-    const search = String(keyword || "").toLowerCase().trim();
+      return values.includes(keyword);
+    });
+  }, [documents, persons, q]);
 
-    if (!search) return persons;
+  const filteredPersonsForPicker = useMemo(() => {
+    const keyword = String(personSearch || "").toLowerCase().trim();
+
+    if (!keyword) return persons;
 
     return persons.filter((person) => {
       const values = [
@@ -140,8 +203,10 @@ export default function Documents() {
         person.nom,
         person.prenom,
         person.full_name,
+        person.fullName,
         person.name,
         person.cin,
+        person.national_id,
         person.phone,
         person.telephone,
         person.email,
@@ -151,39 +216,42 @@ export default function Documents() {
         .join(" ")
         .toLowerCase();
 
-      return values.includes(search);
+      return values.includes(keyword);
     });
-  };
+  }, [persons, personSearch]);
 
-  const openCreate = () => {
+  function openCreate() {
     setForm(emptyForm);
     setPersonSearch("");
     setError("");
     setModal("create");
-  };
+  }
 
-  const openEdit = (doc) => {
-    const person = doc.person;
+  function openEdit(doc) {
+    const personId = getDocPersonId(doc);
+    const foundPerson = persons.find((p) => String(p.id) === String(personId));
 
     setForm({
-      person_id: person.id || "",
-      document_type: doc.type === "Passeport" ? "PASSPORT" : "CIN",
-      cin: person.cin || "",
-      passport_number: person.passport_number || "",
-      issued_by: person.issued_by || "",
-      issue_date: person.issue_date ? String(person.issue_date).slice(0, 10) : "",
-      expiry_date: person.expiry_date
-        ? String(person.expiry_date).slice(0, 10)
+      id: getDocId(doc),
+      person_id: personId,
+      type: normalizeType(getDocType(doc)),
+      number: getDocNumber(doc) === "—" ? "" : getDocNumber(doc),
+      issued_by: getDocIssuedBy(doc) === "—" ? "" : getDocIssuedBy(doc),
+      issue_date: getDocIssueDate(doc)
+        ? String(getDocIssueDate(doc)).slice(0, 10)
         : "",
-      is_valid: doc.is_valid !== false,
+      expiry_date: getDocExpiryDate(doc)
+        ? String(getDocExpiryDate(doc)).slice(0, 10)
+        : "",
+      is_valid: getDocValidity(doc) !== false,
     });
 
-    setPersonSearch(personName(person));
+    setPersonSearch(foundPerson ? personName(foundPerson) : getDocPersonName(doc, persons));
     setError("");
-    setModal(person.id);
-  };
+    setModal("edit");
+  }
 
-  const save = async () => {
+  async function save() {
     try {
       setSaving(true);
       setError("");
@@ -193,54 +261,44 @@ export default function Documents() {
         return;
       }
 
-      if (!form.document_type) {
+      if (!form.type) {
         setError("Veuillez choisir le type de document.");
         return;
       }
 
-      const person = getPerson(form.person_id);
-
-      if (!person) {
-        setError("Personne introuvable.");
-        return;
-      }
-
-      if (form.document_type === "CIN" && !form.cin) {
-        setError("Le numéro CIN est obligatoire.");
-        return;
-      }
-
-      if (form.document_type === "PASSPORT" && !form.passport_number) {
-        setError("Le numéro passeport est obligatoire.");
+      if (!form.number) {
+        setError("Le numéro du document est obligatoire.");
         return;
       }
 
       const payload = {
-        ...person,
-        issued_by: form.issued_by,
+        person_id: form.person_id,
+        type: form.type,
+        number: form.number,
+        issued_by: form.issued_by || null,
         issue_date: form.issue_date || null,
         expiry_date: form.expiry_date || null,
         is_valid: form.is_valid,
       };
 
-      if (form.document_type === "CIN") {
-        payload.cin = form.cin;
+      if (modal === "edit" && form.id) {
+        await identityDocumentsApi.update(form.id, payload);
+      } else {
+        await identityDocumentsApi.create(payload);
       }
-
-      if (form.document_type === "PASSPORT") {
-        payload.passport_number = form.passport_number;
-      }
-
-      await personsApi.update(form.person_id, payload);
 
       setModal(null);
-      await loadPersons();
+      await loadDocuments();
     } catch (e) {
-      setError(e.message || "Erreur lors de l’enregistrement.");
+      setError(
+        e?.status === 404
+          ? "Module documents d’identité en attente du backend."
+          : e?.message || "Erreur lors de l’enregistrement."
+      );
     } finally {
       setSaving(false);
     }
-  };
+  }
 
   return (
     <>
@@ -255,7 +313,7 @@ export default function Documents() {
 
             <div>
               <h3>Total documents</h3>
-              <p>{loading ? "…" : number(documents.length)}</p>
+              <p>{loading ? "…" : ready ? number(filteredDocuments.length) : "—"}</p>
             </div>
           </div>
         </div>
@@ -264,12 +322,20 @@ export default function Documents() {
           <div className="documents-table-header">
             <div>
               <h3>Documents d’identité</h3>
-              <span>CIN, passeport, autorité, délivrance, expiration et validité</span>
+              <span>
+                Type, numéro, personne, autorité, délivrance, expiration et validité
+              </span>
             </div>
 
-            <button className="document-add-btn" onClick={openCreate}>
-              <FaPlus /> Ajouter
-            </button>
+            <div className="documents-header-actions">
+              <button className="document-add-btn" onClick={loadDocuments}>
+                <FaSyncAlt /> Actualiser
+              </button>
+
+              <button className="document-add-btn" onClick={openCreate}>
+                <FaPlus /> Ajouter
+              </button>
+            </div>
           </div>
 
           <div className="documents-filters">
@@ -310,66 +376,90 @@ export default function Documents() {
                   </tr>
                 )}
 
-                {!loading && documents.length === 0 && (
+                {!loading && !ready && (
                   <tr>
                     <td colSpan="8" className="documents-empty">
-                      Aucun document trouvé
+                      —
+                    </td>
+                  </tr>
+                )}
+
+                {!loading && ready && filteredDocuments.length === 0 && (
+                  <tr>
+                    <td colSpan="8" className="documents-empty">
+                      —
                     </td>
                   </tr>
                 )}
 
                 {!loading &&
-                  documents.map((d) => (
-                    <tr key={d.id}>
-                      <td>
-                        <span className="document-type">{d.type || "—"}</span>
-                      </td>
+                  ready &&
+                  filteredDocuments.map((doc) => {
+                    const validity = getDocValidity(doc);
 
-                      <td>{d.number || "—"}</td>
+                    return (
+                      <tr key={getDocId(doc) || `${getDocPersonId(doc)}-${getDocNumber(doc)}`}>
+                        <td>
+                          <span className="document-type">
+                            {displayType(getDocType(doc))}
+                          </span>
+                        </td>
 
-                      <td>{personName(d.person)}</td>
+                        <td>{getDocNumber(doc)}</td>
 
-                      <td>{d.issued_by || "—"}</td>
+                        <td>{getDocPersonName(doc, persons)}</td>
 
-                      <td>{d.issue_date ? fmtDate(d.issue_date) : "—"}</td>
+                        <td>{getDocIssuedBy(doc)}</td>
 
-                      <td>{d.expiry_date ? fmtDate(d.expiry_date) : "—"}</td>
+                        <td>
+                          {getDocIssueDate(doc) ? fmtDate(getDocIssueDate(doc)) : "—"}
+                        </td>
 
-                      <td>
-                        <span
-                          className={
-                            d.is_valid === false
-                              ? "document-invalid"
-                              : d.is_valid === true
-                              ? "document-valid"
-                              : "document-unknown"
-                          }
-                        >
-                          {d.is_valid === false
-                            ? "Expiré"
-                            : d.is_valid === true
-                            ? "Valide"
+                        <td>
+                          {getDocExpiryDate(doc)
+                            ? fmtDate(getDocExpiryDate(doc))
                             : "—"}
-                        </span>
-                      </td>
+                        </td>
 
-                      <td>
-                        <button
-                          className="document-icon-action"
-                          onClick={() => openEdit(d)}
-                          title="Modifier"
-                        >
-                          <FaEdit />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        <td>
+                          <span
+                            className={
+                              validity === false
+                                ? "document-invalid"
+                                : validity === true
+                                ? "document-valid"
+                                : "document-unknown"
+                            }
+                          >
+                            {validity === false
+                              ? "Invalide"
+                              : validity === true
+                              ? "Valide"
+                              : "—"}
+                          </span>
+                        </td>
+
+                        <td>
+                          <button
+                            className="document-icon-action"
+                            onClick={() => openEdit(doc)}
+                            title="Modifier"
+                          >
+                            <FaEdit />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
 
           <div className="documents-pagination">
-            <span>Affichage de {documents.length} document(s)</span>
+            <span>
+              Affichage de{" "}
+              {ready ? filteredDocuments.length : "—"} document(s)
+            </span>
           </div>
         </div>
       </div>
@@ -400,51 +490,39 @@ export default function Documents() {
                   setPersonSearch(value);
                   setForm({ ...form, person_id: "" });
                 }}
-                persons={filteredPersonsForPicker(personSearch)}
+                persons={filteredPersonsForPicker}
                 selectedId={form.person_id}
                 onSelect={(person) => {
                   setForm({ ...form, person_id: person.id });
                   setPersonSearch(personName(person));
                 }}
-                personName={personName}
               />
 
               <div className="document-field">
                 <label>Type de document</label>
                 <select
-                  value={form.document_type}
+                  value={form.type}
                   onChange={(e) =>
-                    setForm({ ...form, document_type: e.target.value })
+                    setForm({ ...form, type: e.target.value })
                   }
                 >
                   <option value="CIN">CIN</option>
                   <option value="PASSPORT">Passeport</option>
+                  <option value="PERMIS">Permis</option>
+                  <option value="AUTRE">Autre</option>
                 </select>
               </div>
 
-              {form.document_type === "CIN" && (
-                <div className="document-field">
-                  <label>Numéro CIN</label>
-                  <input
-                    value={form.cin}
-                    onChange={(e) => setForm({ ...form, cin: e.target.value })}
-                    placeholder="Numéro CIN"
-                  />
-                </div>
-              )}
-
-              {form.document_type === "PASSPORT" && (
-                <div className="document-field">
-                  <label>Numéro passeport</label>
-                  <input
-                    value={form.passport_number}
-                    onChange={(e) =>
-                      setForm({ ...form, passport_number: e.target.value })
-                    }
-                    placeholder="Numéro passeport"
-                  />
-                </div>
-              )}
+              <div className="document-field">
+                <label>Numéro du document</label>
+                <input
+                  value={form.number}
+                  onChange={(e) =>
+                    setForm({ ...form, number: e.target.value })
+                  }
+                  placeholder="Numéro du document"
+                />
+              </div>
 
               <div className="document-field">
                 <label>Délivré par</label>
@@ -488,7 +566,7 @@ export default function Documents() {
                   }
                 >
                   <option value="true">Valide</option>
-                  <option value="false">Expiré / invalide</option>
+                  <option value="false">Invalide</option>
                 </select>
               </div>
             </div>
@@ -524,7 +602,6 @@ function PersonPicker({
   persons,
   selectedId,
   onSelect,
-  personName,
 }) {
   return (
     <div className="document-picker">
@@ -546,7 +623,7 @@ function PersonPicker({
             type="button"
             key={person.id}
             className={
-              selectedId === person.id
+              String(selectedId) === String(person.id)
                 ? "document-picker-item active"
                 : "document-picker-item"
             }
@@ -556,6 +633,7 @@ function PersonPicker({
 
             <span>
               {person.cin ||
+                person.national_id ||
                 person.phone ||
                 person.telephone ||
                 person.email ||
