@@ -1,256 +1,155 @@
-/* =========================
-   SETTINGS GRID
-========================= */
-
 .settings-grid {
-
   display: grid;
-
-  grid-template-columns:
-    repeat(auto-fit, minmax(320px, 1fr));
-
-  gap: 22px;
-
-  margin-top: 20px;
-
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
 }
 
-/* =========================
-   SETTINGS CARD
-========================= */
-
 .settings-card {
-
-  background: white;
-
-  border-radius: 18px;
-
-  padding: 22px;
-
-  box-shadow:
-    0 6px 20px rgba(0,0,0,0.06);
-
-  border:
-    1px solid rgba(0,0,0,0.04);
-
-  transition: 0.25s ease;
-
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 15px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  border: 1px solid #eef2f7;
+  transition: 0.2s ease;
 }
 
 .settings-card:hover {
-
-  transform: translateY(-4px);
-
-  box-shadow:
-    0 10px 24px rgba(0,0,0,0.08);
-
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
-/* =========================
-   HEADER
-========================= */
-
 .settings-header {
-
   display: flex;
-
   align-items: center;
-
-  gap: 12px;
-
-  margin-bottom: 20px;
-
+  gap: 9px;
+  margin-bottom: 13px;
 }
 
 .settings-icon {
-
-  font-size: 20px;
-
+  font-size: 16px;
   color: #16a34a;
-
 }
 
 .settings-header h3 {
-
-  font-size: 17px;
-
-  font-weight: 700;
-
+  margin: 0;
+  font-size: 14px;
+  font-weight: 850;
   color: #021b44;
-
+  line-height: 1.2;
 }
-
-/* =========================
-   CONTENT
-========================= */
 
 .settings-content {
-
   display: flex;
-
   flex-direction: column;
-
-  gap: 14px;
-
+  gap: 10px;
 }
-
-/* =========================
-   LABEL
-========================= */
 
 .settings-content label {
-
-  font-size: 13px;
-
-  font-weight: 600;
-
+  font-size: 11.5px;
+  font-weight: 700;
   color: #475569;
-
+  line-height: 1.25;
 }
-
-/* =========================
-   INPUT
-========================= */
 
 .settings-content input,
 .settings-content select {
-
   width: 100%;
-
-  padding: 12px 14px;
-
-  border-radius: 12px;
-
-  border:
-    1px solid #dbe2ea;
-
+  min-height: 35px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid #dbe2ea;
   background: #f8fafc;
-
-  font-size: 14px;
-
+  font-size: 11.5px;
+  color: #0f172a;
   outline: none;
-
-  transition: 0.2s ease;
-
+  transition: 0.18s ease;
+  box-sizing: border-box;
 }
 
 .settings-content input:focus,
 .settings-content select:focus {
-
   border-color: #16a34a;
-
-  background: white;
-
-  box-shadow:
-    0 0 0 3px rgba(22,163,74,0.10);
-
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
 }
 
-/* =========================
-   BUTTON
-========================= */
-
 .settings-content button {
-
+  min-height: 33px;
   border: none;
-
-  padding: 12px;
-
-  border-radius: 12px;
-
-  background:
-    linear-gradient(
-      90deg,
-      #16a34a,
-      #22c55e
-    );
-
-  color: white;
-
-  font-size: 14px;
-
-  font-weight: 600;
-
+  padding: 0 12px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+  color: #ffffff;
+  font-size: 11.5px;
+  font-weight: 850;
   cursor: pointer;
-
-  transition: 0.25s ease;
-
+  transition: 0.18s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .settings-content button:hover {
-
-  transform: translateY(-2px);
-
-  box-shadow:
-    0 8px 18px rgba(34,197,94,0.22);
-
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(34, 197, 94, 0.22);
 }
 
-/* =========================
-   SWITCH ROW
-========================= */
-
 .switch-row {
-
   display: flex;
-
   align-items: center;
-
   justify-content: space-between;
-
   background: #f8fafc;
-
-  padding: 12px 14px;
-
-  border-radius: 12px;
-
+  padding: 9px 10px;
+  border-radius: 10px;
+  border: 1px solid #eef2f7;
+  gap: 10px;
 }
 
 .switch-row span {
-
-  font-size: 14px;
-
+  font-size: 11.5px;
   color: #334155;
-
-  font-weight: 500;
-
+  font-weight: 650;
+  line-height: 1.25;
 }
-
-/* =========================
-   CHECKBOX
-========================= */
 
 .switch-row input[type="checkbox"] {
-
-  width: 18px;
-  height: 18px;
-
+  width: 15px;
+  height: 15px;
   cursor: pointer;
-
+  flex-shrink: 0;
 }
-
-/* =========================
-   FILE INPUT
-========================= */
 
 .settings-content input[type="file"] {
-
-  background: white;
-
-  padding: 10px;
-
+  background: #ffffff;
+  padding: 7px 9px;
+  min-height: 34px;
 }
 
-/* =========================
-   RESPONSIVE
-========================= */
-
 @media (max-width: 768px) {
-
   .settings-grid {
-
     grid-template-columns: 1fr;
-
+    gap: 12px;
+    margin-top: 12px;
   }
 
+  .settings-card {
+    padding: 13px;
+    border-radius: 13px;
+  }
+
+  .settings-header h3 {
+    font-size: 13px;
+  }
+
+  .settings-content input,
+  .settings-content select {
+    min-height: 34px;
+    font-size: 11px;
+  }
+
+  .settings-content button {
+    min-height: 32px;
+    font-size: 11px;
+  }
 }
