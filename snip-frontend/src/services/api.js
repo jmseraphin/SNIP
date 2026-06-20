@@ -544,4 +544,34 @@ export const searchApi = {
   },
 };
 
+export const rolesApi = {
+  async list(params = {}) {
+    return normalize(await request(`/roles${toQuery(params)}`), ["roles"]);
+  },
+
+  get(id) {
+    return request(`/roles/${id}`);
+  },
+
+  create(payload) {
+    return request("/roles", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  update(id, payload) {
+    return request(`/roles/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  remove(id) {
+    return request(`/roles/${id}`, {
+      method: "DELETE",
+    });
+  },
+};
+
 export { API_BASE_URL, getToken, clearToken, toQuery, normalize, extractArray };

@@ -7,7 +7,6 @@ import PersonDetails from "./pages/PersonDetails";
 import Search from "./pages/Search";
 import Events from "./pages/Events";
 import Documents from "./pages/Documents";
-import GenericList from "./pages/GenericList";
 import Settings from "./pages/Settings";
 import Files from "./pages/Files";
 import Relationships from "./pages/Relationships";
@@ -16,6 +15,8 @@ import Contacts from "./pages/Contacts";
 
 import Layout from "./components/Layout";
 import { getToken } from "./services/api";
+import UsersRoles from "./pages/UsersRoles";
+import AuditLogs from "./pages/AuditLogs";
 
 function ProtectedRoute() {
   return getToken() ? <Layout /> : <Navigate to="/login" replace />;
@@ -39,9 +40,9 @@ export default function App() {
           <Route path="/files" element={<Files />} />
           <Route path="/addresses" element={<Addresses />} />
           <Route path="/contacts" element={<Contacts />} />
+          <Route path="/users" element={<UsersRoles />} />
+          <Route path="/audit-logs" element={<AuditLogs />} />
 
-          <Route path="/users" element={<GenericList type="users" />} />
-          <Route path="/audit-logs" element={<GenericList type="audit" />} />
           <Route path="/settings" element={<Settings />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />

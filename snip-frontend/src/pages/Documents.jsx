@@ -2,7 +2,7 @@ import "../styles/documents.css";
 import { useEffect, useMemo, useState } from "react";
 import Topbar from "../components/Topbar";
 import { identityDocumentsApi, personsApi } from "../services/api";
-import { fmtDate, number } from "../utils/format";
+import { fmtDate, number, fullName, nationalId } from "../utils/format";
 import {
   FaIdCard,
   FaSearch,
@@ -24,16 +24,43 @@ const emptyForm = {
   is_valid: true,
 };
 
-function personName(p) {
-  if (!p) return "—";
+function normalizeList(res, keys = []) {
+  if (Array.isArray(res)) return res;
 
-  return (
-    `${p.last_name || p.nom || ""} ${p.first_name || p.prenom || ""}`.trim() ||
-    p.full_name ||
-    p.fullName ||
-    p.name ||
-    "Personne sans nom"
-  );
+  for (const key of keys) {
+    if (Array.isArray(res?.[key])) return res[key];
+    if (Array.isArray(res?.data?.[key])) return res.data[key];
+  }
+
+  if (Array.isArray(res?.data)) return res.data;
+  if (Array.isArray(res?.items)) return res.items;
+  if (Array.isArray(res?.results)) return res.results;
+  if (Array.isArray(res?.data?.data)) return res.data.data;
+
+  return [];
+}
+
+function personLabel(person) {
+  if (!person) return "—";
+
+  const name =
+    fullName(person) ||
+    person.full_name ||
+    person.fullName ||
+    person.name ||
+    `${person.last_name || person.nom || ""} ${
+      person.first_name || person.prenom || ""
+    }`.trim() ||
+    "Personne sans nom";
+
+  const cin =
+    nationalId(person) ||
+    person.cin ||
+    person.national_id ||
+    person.nationalId ||
+    "";
+
+  return cin ? `${name} — ${cin}` : name;
 }
 
 function getDocId(doc) {
@@ -49,12 +76,12 @@ function getDocPersonName(doc, persons = []) {
   if (doc.personName) return doc.personName;
   if (doc.full_name) return doc.full_name;
   if (doc.fullName) return doc.fullName;
-  if (doc.person) return personName(doc.person);
+  if (doc.person) return personLabel(doc.person);
 
   const personId = getDocPersonId(doc);
   const found = persons.find((p) => String(p.id) === String(personId));
 
-  return found ? personName(found) : personId || "—";
+  return found ? personLabel(found) : personId || "—";
 }
 
 function getDocType(doc) {
@@ -99,7 +126,6 @@ function getDocValidity(doc) {
 
 function normalizeType(type) {
   if (!type) return "CIN";
-
   const value = String(type).toUpperCase();
 
   if (value === "PASSEPORT") return "PASSPORT";
@@ -140,7 +166,7 @@ export default function Documents() {
         limit: 200,
       });
 
-      setDocuments(response?.data || []);
+      setDocuments(normalizeList(response, ["documents", "identity_documents", "identityDocuments"]));
     } catch {
       setDocuments([]);
       setReady(false);
@@ -151,12 +177,8 @@ export default function Documents() {
 
   async function loadPersons() {
     try {
-      const response = await personsApi.list({
-        page: 1,
-        limit: 200,
-      });
-
-      setPersons(response?.data || []);
+      const response = await personsApi.list();
+      setPersons(normalizeList(response, ["persons"]));
     } catch {
       setPersons([]);
     }
@@ -207,10 +229,11 @@ export default function Documents() {
         person.name,
         person.cin,
         person.national_id,
+        person.nationalId,
         person.phone,
         person.telephone,
         person.email,
-        personName(person),
+        personLabel(person),
       ]
         .filter(Boolean)
         .join(" ")
@@ -225,6 +248,7 @@ export default function Documents() {
     setPersonSearch("");
     setError("");
     setModal("create");
+    loadPersons();
   }
 
   function openEdit(doc) {
@@ -246,7 +270,10 @@ export default function Documents() {
       is_valid: getDocValidity(doc) !== false,
     });
 
-    setPersonSearch(foundPerson ? personName(foundPerson) : getDocPersonName(doc, persons));
+    setPersonSearch(
+      foundPerson ? personLabel(foundPerson) : getDocPersonName(doc, persons)
+    );
+
     setError("");
     setModal("edit");
   }
@@ -288,6 +315,8 @@ export default function Documents() {
       }
 
       setModal(null);
+      setForm(emptyForm);
+      setPersonSearch("");
       await loadDocuments();
     } catch (e) {
       setError(
@@ -398,7 +427,12 @@ export default function Documents() {
                     const validity = getDocValidity(doc);
 
                     return (
-                      <tr key={getDocId(doc) || `${getDocPersonId(doc)}-${getDocNumber(doc)}`}>
+                      <tr
+                        key={
+                          getDocId(doc) ||
+                          `${getDocPersonId(doc)}-${getDocNumber(doc)}`
+                        }
+                      >
                         <td>
                           <span className="document-type">
                             {displayType(getDocType(doc))}
@@ -412,7 +446,9 @@ export default function Documents() {
                         <td>{getDocIssuedBy(doc)}</td>
 
                         <td>
-                          {getDocIssueDate(doc) ? fmtDate(getDocIssueDate(doc)) : "—"}
+                          {getDocIssueDate(doc)
+                            ? fmtDate(getDocIssueDate(doc))
+                            : "—"}
                         </td>
 
                         <td>
@@ -457,8 +493,7 @@ export default function Documents() {
 
           <div className="documents-pagination">
             <span>
-              Affichage de{" "}
-              {ready ? filteredDocuments.length : "—"} document(s)
+              Affichage de {ready ? filteredDocuments.length : "—"} document(s)
             </span>
           </div>
         </div>
@@ -494,7 +529,7 @@ export default function Documents() {
                 selectedId={form.person_id}
                 onSelect={(person) => {
                   setForm({ ...form, person_id: person.id });
-                  setPersonSearch(personName(person));
+                  setPersonSearch(personLabel(person));
                 }}
               />
 
@@ -610,38 +645,29 @@ function PersonPicker({
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Rechercher une personne"
+        placeholder="Rechercher par nom ou CIN"
       />
 
-      <div className="document-picker-list">
-        {persons.length === 0 && (
-          <div className="document-picker-empty">Aucune personne trouvée</div>
-        )}
+      {value && !selectedId && (
+        <div className="document-picker-list">
+          {persons.length === 0 && (
+            <div className="document-picker-empty">
+              Aucune personne trouvée
+            </div>
+          )}
 
-        {persons.slice(0, 8).map((person) => (
-          <button
-            type="button"
-            key={person.id}
-            className={
-              String(selectedId) === String(person.id)
-                ? "document-picker-item active"
-                : "document-picker-item"
-            }
-            onClick={() => onSelect(person)}
-          >
-            <strong>{personName(person)}</strong>
-
-            <span>
-              {person.cin ||
-                person.national_id ||
-                person.phone ||
-                person.telephone ||
-                person.email ||
-                person.id}
-            </span>
-          </button>
-        ))}
-      </div>
+          {persons.slice(0, 10).map((person) => (
+            <button
+              type="button"
+              key={person.id}
+              className="document-picker-item"
+              onClick={() => onSelect(person)}
+            >
+              <strong>{personLabel(person)}</strong>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

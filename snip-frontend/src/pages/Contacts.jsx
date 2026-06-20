@@ -2,7 +2,7 @@ import "../styles/documents.css";
 import { useEffect, useMemo, useState } from "react";
 import Topbar from "../components/Topbar";
 import { contactsApi, personsApi } from "../services/api";
-import { number } from "../utils/format";
+import { number, fullName, nationalId } from "../utils/format";
 import {
   FaPhoneAlt,
   FaSearch,
@@ -22,16 +22,43 @@ const emptyForm = {
   is_primary: false,
 };
 
-function personName(p) {
-  if (!p) return "—";
+function normalizeList(res, keys = []) {
+  if (Array.isArray(res)) return res;
 
-  return (
-    `${p.last_name || p.nom || ""} ${p.first_name || p.prenom || ""}`.trim() ||
-    p.full_name ||
-    p.fullName ||
-    p.name ||
-    "Personne sans nom"
-  );
+  for (const key of keys) {
+    if (Array.isArray(res?.[key])) return res[key];
+    if (Array.isArray(res?.data?.[key])) return res.data[key];
+  }
+
+  if (Array.isArray(res?.data)) return res.data;
+  if (Array.isArray(res?.items)) return res.items;
+  if (Array.isArray(res?.results)) return res.results;
+  if (Array.isArray(res?.data?.data)) return res.data.data;
+
+  return [];
+}
+
+function personLabel(person) {
+  if (!person) return "—";
+
+  const name =
+    fullName(person) ||
+    person.full_name ||
+    person.fullName ||
+    person.name ||
+    `${person.last_name || person.nom || ""} ${
+      person.first_name || person.prenom || ""
+    }`.trim() ||
+    "Personne sans nom";
+
+  const cin =
+    nationalId(person) ||
+    person.cin ||
+    person.national_id ||
+    person.nationalId ||
+    "";
+
+  return cin ? `${name} — ${cin}` : name;
 }
 
 function getContactId(item) {
@@ -47,12 +74,12 @@ function getPersonName(item, persons = []) {
   if (item.personName) return item.personName;
   if (item.full_name) return item.full_name;
   if (item.fullName) return item.fullName;
-  if (item.person) return personName(item.person);
+  if (item.person) return personLabel(item.person);
 
   const personId = getContactPersonId(item);
   const found = persons.find((p) => String(p.id) === String(personId));
 
-  return found ? personName(found) : personId || "—";
+  return found ? personLabel(found) : personId || "—";
 }
 
 function getContactType(item) {
@@ -85,12 +112,8 @@ export default function Contacts() {
       setReady(true);
       setError("");
 
-      const response = await contactsApi.list({
-        page: 1,
-        limit: 200,
-      });
-
-      setContacts(response?.data || []);
+      const response = await contactsApi.list({ page: 1, limit: 200 });
+      setContacts(normalizeList(response, ["contacts"]));
     } catch {
       setContacts([]);
       setReady(false);
@@ -101,12 +124,8 @@ export default function Contacts() {
 
   async function loadPersons() {
     try {
-      const response = await personsApi.list({
-        page: 1,
-        limit: 500,
-      });
-
-      setPersons(response?.data || []);
+      const response = await personsApi.list();
+      setPersons(normalizeList(response, ["persons"]));
     } catch {
       setPersons([]);
     }
@@ -119,11 +138,10 @@ export default function Contacts() {
 
   const filteredContacts = useMemo(() => {
     const keyword = String(q || "").toLowerCase().trim();
-
     if (!keyword) return contacts;
 
-    return contacts.filter((item) => {
-      const values = [
+    return contacts.filter((item) =>
+      [
         getPersonName(item, persons),
         getContactType(item),
         getContactValue(item),
@@ -132,19 +150,17 @@ export default function Contacts() {
       ]
         .filter(Boolean)
         .join(" ")
-        .toLowerCase();
-
-      return values.includes(keyword);
-    });
+        .toLowerCase()
+        .includes(keyword)
+    );
   }, [contacts, persons, q]);
 
   const filteredPersonsForPicker = useMemo(() => {
     const keyword = String(personSearch || "").toLowerCase().trim();
-
     if (!keyword) return persons;
 
-    return persons.filter((person) => {
-      const values = [
+    return persons.filter((person) =>
+      [
         person.id,
         person.last_name,
         person.first_name,
@@ -155,17 +171,17 @@ export default function Contacts() {
         person.name,
         person.cin,
         person.national_id,
+        person.nationalId,
         person.phone,
         person.telephone,
         person.email,
-        personName(person),
+        personLabel(person),
       ]
         .filter(Boolean)
         .join(" ")
-        .toLowerCase();
-
-      return values.includes(keyword);
-    });
+        .toLowerCase()
+        .includes(keyword)
+    );
   }, [persons, personSearch]);
 
   function openCreate() {
@@ -173,6 +189,7 @@ export default function Contacts() {
     setPersonSearch("");
     setError("");
     setModal("create");
+    loadPersons();
   }
 
   function openEdit(item) {
@@ -187,7 +204,7 @@ export default function Contacts() {
       is_primary: isPrimary(item),
     });
 
-    setPersonSearch(foundPerson ? personName(foundPerson) : getPersonName(item, persons));
+    setPersonSearch(foundPerson ? personLabel(foundPerson) : getPersonName(item, persons));
     setError("");
     setModal("edit");
   }
@@ -197,20 +214,9 @@ export default function Contacts() {
       setSaving(true);
       setError("");
 
-      if (!form.person_id) {
-        setError("Veuillez sélectionner la personne concernée.");
-        return;
-      }
-
-      if (!form.type) {
-        setError("Veuillez choisir le type de contact.");
-        return;
-      }
-
-      if (!form.value) {
-        setError("La valeur du contact est obligatoire.");
-        return;
-      }
+      if (!form.person_id) return setError("Veuillez sélectionner la personne concernée.");
+      if (!form.type) return setError("Veuillez choisir le type de contact.");
+      if (!form.value) return setError("La valeur du contact est obligatoire.");
 
       const payload = {
         person_id: form.person_id,
@@ -226,6 +232,8 @@ export default function Contacts() {
       }
 
       setModal(null);
+      setForm(emptyForm);
+      setPersonSearch("");
       await loadContacts();
     } catch (e) {
       setError(
@@ -241,14 +249,9 @@ export default function Contacts() {
   async function removeContact(item) {
     try {
       const id = getContactId(item);
+      if (!id) return setError("Contact introuvable.");
 
-      if (!id) {
-        setError("Contact introuvable.");
-        return;
-      }
-
-      const confirmed = window.confirm("Supprimer ce contact ?");
-      if (!confirmed) return;
+      if (!window.confirm("Supprimer ce contact ?")) return;
 
       await contactsApi.remove(id);
       await loadContacts();
@@ -326,25 +329,19 @@ export default function Contacts() {
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan="5" className="documents-empty">
-                      Chargement...
-                    </td>
+                    <td colSpan="5" className="documents-empty">Chargement...</td>
                   </tr>
                 )}
 
                 {!loading && !ready && (
                   <tr>
-                    <td colSpan="5" className="documents-empty">
-                      —
-                    </td>
+                    <td colSpan="5" className="documents-empty">—</td>
                   </tr>
                 )}
 
                 {!loading && ready && filteredContacts.length === 0 && (
                   <tr>
-                    <td colSpan="5" className="documents-empty">
-                      —
-                    </td>
+                    <td colSpan="5" className="documents-empty">—</td>
                   </tr>
                 )}
 
@@ -355,21 +352,13 @@ export default function Contacts() {
                       <td>{getPersonName(item, persons)}</td>
 
                       <td>
-                        <span className="document-type">
-                          {getContactType(item)}
-                        </span>
+                        <span className="document-type">{getContactType(item)}</span>
                       </td>
 
                       <td>{getContactValue(item)}</td>
 
                       <td>
-                        <span
-                          className={
-                            isPrimary(item)
-                              ? "document-valid"
-                              : "document-unknown"
-                          }
-                        >
+                        <span className={isPrimary(item) ? "document-valid" : "document-unknown"}>
                           {isPrimary(item) ? "Oui" : "—"}
                         </span>
                       </td>
@@ -400,9 +389,7 @@ export default function Contacts() {
           </div>
 
           <div className="documents-pagination">
-            <span>
-              Affichage de {ready ? filteredContacts.length : "—"} contact(s)
-            </span>
+            <span>Affichage de {ready ? filteredContacts.length : "—"} contact(s)</span>
           </div>
         </div>
       </div>
@@ -410,16 +397,11 @@ export default function Contacts() {
       {modal && (
         <div className="documents-modal-overlay">
           <div className="documents-modal-box">
-            <button
-              className="documents-modal-close"
-              onClick={() => setModal(null)}
-            >
+            <button className="documents-modal-close" onClick={() => setModal(null)}>
               <FaTimes />
             </button>
 
-            <h3>
-              {modal === "create" ? "Ajouter un contact" : "Modifier contact"}
-            </h3>
+            <h3>{modal === "create" ? "Ajouter un contact" : "Modifier contact"}</h3>
 
             {error && <div className="documents-error">{error}</div>}
 
@@ -435,7 +417,7 @@ export default function Contacts() {
                 selectedId={form.person_id}
                 onSelect={(person) => {
                   setForm({ ...form, person_id: person.id });
-                  setPersonSearch(personName(person));
+                  setPersonSearch(personLabel(person));
                 }}
               />
 
@@ -499,14 +481,7 @@ export default function Contacts() {
   );
 }
 
-function PersonPicker({
-  label,
-  value,
-  onChange,
-  persons,
-  selectedId,
-  onSelect,
-}) {
+function PersonPicker({ label, value, onChange, persons, selectedId, onSelect }) {
   return (
     <div className="document-picker">
       <label>{label}</label>
@@ -514,38 +489,27 @@ function PersonPicker({
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Rechercher une personne"
+        placeholder="Rechercher par nom ou CIN"
       />
 
-      <div className="document-picker-list">
-        {persons.length === 0 && (
-          <div className="document-picker-empty">Aucune personne trouvée</div>
-        )}
+      {value && !selectedId && (
+        <div className="document-picker-list">
+          {persons.length === 0 && (
+            <div className="document-picker-empty">Aucune personne trouvée</div>
+          )}
 
-        {persons.slice(0, 8).map((person) => (
-          <button
-            type="button"
-            key={person.id}
-            className={
-              String(selectedId) === String(person.id)
-                ? "document-picker-item active"
-                : "document-picker-item"
-            }
-            onClick={() => onSelect(person)}
-          >
-            <strong>{personName(person)}</strong>
-
-            <span>
-              {person.cin ||
-                person.national_id ||
-                person.phone ||
-                person.telephone ||
-                person.email ||
-                person.id}
-            </span>
-          </button>
-        ))}
-      </div>
+          {persons.slice(0, 10).map((person) => (
+            <button
+              type="button"
+              key={person.id}
+              className="document-picker-item"
+              onClick={() => onSelect(person)}
+            >
+              <strong>{personLabel(person)}</strong>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -2,7 +2,7 @@ import "../styles/addresses.css";
 import { useEffect, useMemo, useState } from "react";
 import Topbar from "../components/Topbar";
 import { personsApi, addressesApi } from "../services/api";
-import { fmtDate, number } from "../utils/format";
+import { fmtDate, number, fullName, nationalId } from "../utils/format";
 import {
   FaMapMarkerAlt,
   FaSearch,
@@ -25,13 +25,73 @@ const emptyForm = {
 };
 
 const addressTypes = [
-  { value: "Domicile", label: "Domicile" },
-  { value: "Travail", label: "Travail" },
-  { value: "Actuelle", label: "Actuelle" },
-  { value: "Ancienne", label: "Ancienne" },
-  { value: "Temporaire", label: "Temporaire" },
-  { value: "Autre", label: "Autre" },
+  "Domicile",
+  "Travail",
+  "Actuelle",
+  "Ancienne",
+  "Temporaire",
+  "Autre",
 ];
+
+function normalizeList(res, keys = []) {
+  if (Array.isArray(res)) return res;
+
+  for (const key of keys) {
+    if (Array.isArray(res?.[key])) return res[key];
+    if (Array.isArray(res?.data?.[key])) return res.data[key];
+  }
+
+  if (Array.isArray(res?.data)) return res.data;
+  if (Array.isArray(res?.items)) return res.items;
+  if (Array.isArray(res?.results)) return res.results;
+  if (Array.isArray(res?.data?.data)) return res.data.data;
+
+  return [];
+}
+
+function personLabel(person) {
+  if (!person) return "—";
+
+  const name =
+    fullName(person) ||
+    person.full_name ||
+    person.fullName ||
+    person.name ||
+    `${person.last_name || person.nom || ""} ${
+      person.first_name || person.prenom || ""
+    }`.trim() ||
+    "Personne sans nom";
+
+  const cin =
+    nationalId(person) ||
+    person.cin ||
+    person.national_id ||
+    person.nationalId ||
+    "";
+
+  return cin ? `${name} — ${cin}` : name;
+}
+
+function normalizeAddress(item) {
+  return {
+    id: item.id,
+    person_id: item.person_id || item.personId || item.person?.id || "",
+    person_name:
+      item.person_name ||
+      item.personName ||
+      item.person?.full_name ||
+      item.person?.fullName ||
+      item.person?.name ||
+      personLabel(item.person),
+    type: item.type || item.address_type || item.addressType || "",
+    address: item.address || item.full_address || item.fullAddress || "",
+    city: item.city || "",
+    region: item.region || "",
+    country: item.country || "",
+    start_date: item.start_date || item.startDate || "",
+    end_date: item.end_date || item.endDate || "",
+  };
+}
 
 export default function Addresses() {
   const [persons, setPersons] = useState([]);
@@ -41,59 +101,34 @@ export default function Addresses() {
   const [form, setForm] = useState(emptyForm);
   const [personSearch, setPersonSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [personsLoading, setPersonsLoading] = useState(false);
   const [backendReady, setBackendReady] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const personName = (person) =>
-    `${person.last_name || person.nom || ""} ${
-      person.first_name || person.prenom || ""
-    }`.trim() ||
-    person.full_name ||
-    person.name ||
-    "Personne sans nom";
-
-  const getPerson = (id) =>
+  const findPerson = (id) =>
     persons.find((person) => String(person.id) === String(id));
 
   const displayPerson = (id, fallback = "") => {
-    const person = getPerson(id);
-    if (person) return personName(person);
+    const found = findPerson(id);
+    if (found) return personLabel(found);
     return fallback || "—";
   };
 
-  const normalizeAddress = (item) => ({
-    id: item.id,
-    person_id: item.person_id || item.personId || item.person?.id || "",
-    person_name:
-      item.person_name ||
-      item.personName ||
-      item.person?.full_name ||
-      item.person?.name ||
-      `${item.person?.last_name || ""} ${item.person?.first_name || ""}`.trim(),
-    type: item.type || item.address_type || item.addressType || "",
-    address: item.address || item.full_address || "",
-    city: item.city || "",
-    region: item.region || "",
-    country: item.country || "",
-    start_date: item.start_date || item.startDate || null,
-    end_date: item.end_date || item.endDate || null,
-    raw: item,
-  });
-
   const loadPersons = async () => {
     try {
-      const response = await personsApi.list({
-        page: 1,
-        limit: 100,
-      });
+      setPersonsLoading(true);
 
-      const data = response?.data || [];
+      const response = await personsApi.list();
+      const data = normalizeList(response, ["persons"]);
+
       setPersons(data);
       return data;
     } catch {
       setPersons([]);
       return [];
+    } finally {
+      setPersonsLoading(false);
     }
   };
 
@@ -104,19 +139,12 @@ export default function Addresses() {
         limit: 100,
       });
 
-      const data = response?.data || [];
+      const data = normalizeList(response, ["addresses"]);
       setAddresses(data.map(normalizeAddress));
       setBackendReady(true);
-      return data;
     } catch (e) {
-      if (e.status === 404) {
-        setAddresses([]);
-        setBackendReady(false);
-        return [];
-      }
-
       setAddresses([]);
-      throw e;
+      setBackendReady(false);
     }
   };
 
@@ -126,8 +154,6 @@ export default function Addresses() {
       setError("");
 
       await Promise.all([loadPersons(), loadAddresses()]);
-    } catch (e) {
-      setError(e.message || "Erreur lors du chargement des adresses.");
     } finally {
       setLoading(false);
     }
@@ -137,6 +163,7 @@ export default function Addresses() {
     load();
   }, []);
 
+
   const filteredAddresses = useMemo(() => {
     const keyword = String(q || "").toLowerCase().trim();
 
@@ -144,9 +171,9 @@ export default function Addresses() {
 
     return addresses.filter((item) => {
       const values = [
-        item.id,
         item.person_id,
         item.person_name,
+        displayPerson(item.person_id, item.person_name),
         item.type,
         item.address,
         item.city,
@@ -154,7 +181,6 @@ export default function Addresses() {
         item.country,
         item.start_date,
         item.end_date,
-        displayPerson(item.person_id, item.person_name),
       ]
         .filter(Boolean)
         .join(" ")
@@ -164,39 +190,42 @@ export default function Addresses() {
     });
   }, [addresses, q, persons]);
 
-  const filteredPersonsForPicker = (keyword) => {
-    const search = String(keyword || "").toLowerCase().trim();
+  const filteredPersons = useMemo(() => {
+    const keyword = String(personSearch || "").toLowerCase().trim();
 
-    if (!search) return persons;
+    if (!keyword) return persons;
 
-    return persons.filter((person) => {
-      const values = [
+    return persons.filter((person) =>
+      [
         person.id,
-        person.last_name,
         person.first_name,
-        person.nom,
+        person.last_name,
         person.prenom,
+        person.nom,
         person.full_name,
+        person.fullName,
         person.name,
         person.cin,
+        person.national_id,
+        person.nationalId,
         person.phone,
         person.telephone,
         person.email,
-        personName(person),
+        personLabel(person),
       ]
         .filter(Boolean)
         .join(" ")
-        .toLowerCase();
-
-      return values.includes(search);
-    });
-  };
+        .toLowerCase()
+        .includes(keyword)
+    );
+  }, [persons, personSearch]);
 
   const openCreate = () => {
     setForm(emptyForm);
     setPersonSearch("");
     setError("");
     setModal("create");
+    loadPersons();
   };
 
   const openEdit = (item) => {
@@ -259,6 +288,8 @@ export default function Addresses() {
       }
 
       setModal(null);
+      setForm(emptyForm);
+      setPersonSearch("");
       await load();
     } catch (e) {
       setError(e.message || "Erreur lors de l’enregistrement.");
@@ -291,7 +322,9 @@ export default function Addresses() {
 
             <div>
               <h3>Total adresses</h3>
-              <p>{loading ? "…" : backendReady ? number(filteredAddresses.length) : "—"}</p>
+              <p>
+                {loading ? "…" : backendReady ? number(filteredAddresses.length) : "—"}
+              </p>
             </div>
           </div>
         </div>
@@ -374,15 +407,10 @@ export default function Addresses() {
                       </td>
 
                       <td className="address-text">{item.address || "—"}</td>
-
                       <td>{item.city || "—"}</td>
-
                       <td>{item.region || "—"}</td>
-
                       <td>{item.country || "—"}</td>
-
                       <td>{item.start_date ? fmtDate(item.start_date) : "—"}</td>
-
                       <td>{item.end_date ? fmtDate(item.end_date) : "—"}</td>
 
                       <td>
@@ -428,26 +456,50 @@ export default function Addresses() {
               <FaTimes />
             </button>
 
-            <h3>{modal === "create" ? "Ajouter une adresse" : "Modifier l’adresse"}</h3>
+            <h3>{modal === "create" ? "Ajouter une adresse" : "Modifier adresse"}</h3>
 
             {error && <div className="addresses-error">{error}</div>}
 
             <div className="addresses-form-grid">
-              <PersonPicker
-                label="Personne concernée"
-                value={personSearch}
-                onChange={(value) => {
-                  setPersonSearch(value);
-                  setForm({ ...form, person_id: "" });
-                }}
-                persons={filteredPersonsForPicker(personSearch)}
-                selectedId={form.person_id}
-                onSelect={(person) => {
-                  setForm({ ...form, person_id: person.id });
-                  setPersonSearch(personName(person));
-                }}
-                personName={personName}
-              />
+              <div className="address-field person-autocomplete">
+                <label>Personne concernée</label>
+
+                <input
+                  value={personSearch}
+                  onChange={(e) => {
+                    setPersonSearch(e.target.value);
+                    setForm({ ...form, person_id: "" });
+                  }}
+                  placeholder={
+                    personsLoading
+                      ? "Chargement des personnes..."
+                      : "Rechercher par nom ou CIN"
+                  }
+                />
+
+                {personSearch && !form.person_id && (
+                  <div className="person-suggestions">
+                    {filteredPersons.length === 0 && (
+                      <div className="person-suggestion-empty">
+                        Aucune personne trouvée
+                      </div>
+                    )}
+
+                    {filteredPersons.slice(0, 10).map((person) => (
+                      <button
+                        type="button"
+                        key={person.id}
+                        onClick={() => {
+                          setForm({ ...form, person_id: person.id });
+                          setPersonSearch(personLabel(person));
+                        }}
+                      >
+                        {personLabel(person)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <div className="address-field">
                 <label>Type d’adresse</label>
@@ -455,24 +507,23 @@ export default function Addresses() {
                   value={form.type}
                   onChange={(e) => setForm({ ...form, type: e.target.value })}
                 >
-                  <option value="">Sélectionner un type</option>
-
-                  {addressTypes.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
+                  <option value="">Choisir un type</option>
+                  {addressTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
                     </option>
                   ))}
                 </select>
               </div>
 
-              <div className="address-field address-field-wide">
+              <div className="address-field address-wide">
                 <label>Adresse complète</label>
-                <textarea
+                <input
                   value={form.address}
                   onChange={(e) =>
                     setForm({ ...form, address: e.target.value })
                   }
-                  placeholder="Lot, rue, quartier, bâtiment..."
+                  placeholder="Adresse complète"
                 />
               </div>
 
@@ -551,56 +602,5 @@ export default function Addresses() {
         </div>
       )}
     </>
-  );
-}
-
-function PersonPicker({
-  label,
-  value,
-  onChange,
-  persons,
-  selectedId,
-  onSelect,
-  personName,
-}) {
-  return (
-    <div className="address-picker">
-      <label>{label}</label>
-
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Rechercher une personne"
-      />
-
-      <div className="address-picker-list">
-        {persons.length === 0 && (
-          <div className="address-picker-empty">Aucune personne trouvée</div>
-        )}
-
-        {persons.slice(0, 8).map((person) => (
-          <button
-            type="button"
-            key={person.id}
-            className={
-              selectedId === person.id
-                ? "address-picker-item active"
-                : "address-picker-item"
-            }
-            onClick={() => onSelect(person)}
-          >
-            <strong>{personName(person)}</strong>
-
-            <span>
-              {person.cin ||
-                person.phone ||
-                person.telephone ||
-                person.email ||
-                person.id}
-            </span>
-          </button>
-        ))}
-      </div>
-    </div>
   );
 }

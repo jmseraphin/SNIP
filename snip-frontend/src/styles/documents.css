@@ -891,3 +891,158 @@
     flex: 1;
   }
 }
+
+.details-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 10px 0 12px;
+  margin-bottom: 4px;
+}
+
+.details-tabs button {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  border-radius: 999px;
+  padding: 8px 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font-size: 11.5px;
+  font-weight: 850;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.details-tabs button svg {
+  font-size: 11px;
+}
+
+.details-tabs button:hover,
+.details-tabs button.active {
+  background: #335979;
+  border-color: #335979;
+  color: #ffffff;
+}
+
+/* ===== AUDIT TABLE COMPACT FIX ===== */
+
+.documents-table {
+  table-layout: auto;
+}
+
+.documents-table th,
+.documents-table td {
+  padding: 6px 8px;
+  font-size: 11px;
+  line-height: 1.25;
+  vertical-align: middle;
+}
+
+.documents-table th {
+  white-space: nowrap;
+}
+
+.documents-table td {
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.documents-table td:nth-child(1) {
+  width: 90px;
+}
+
+.documents-table td:nth-child(2) {
+  width: 85px;
+}
+
+.documents-table td:nth-child(3) {
+  width: 90px;
+}
+
+.documents-table td:nth-child(4) {
+  width: 80px;
+}
+
+.documents-table td:nth-child(5) {
+  width: 70px;
+}
+
+.documents-table td:nth-child(6) {
+  min-width: 150px;
+  max-width: 210px;
+}
+
+.documents-table td:nth-child(7) {
+  width: 70px;
+}
+
+.documents-table td:nth-child(8) {
+  width: 80px;
+}
+
+.documents-table td:nth-child(9) {
+  width: 95px;
+}
+
+.documents-table td:nth-child(10) {
+  min-width: 160px;
+  max-width: 230px;
+}
+
+.documents-table tbody tr {
+  height: auto;
+}
+
+.document-type,
+.document-valid,
+.document-invalid,
+.document-unknown {
+  padding: 3px 7px;
+  font-size: 10px;
+  line-height: 1;
+}
+
+@media (max-width: 1100px) {
+  .documents-table {
+    min-width: 980px;
+  }
+}
+
+.password-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.password-input-wrap input {
+  padding-right: 42px !important;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  top: 50%;
+  right: 9px;
+  transform: translateY(-50%);
+  width: 27px;
+  height: 27px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.password-toggle-btn:hover {
+  background: #e0f2fe;
+  color: #335979;
+}
+
+.password-toggle-btn svg {
+  font-size: 13px;
+}
