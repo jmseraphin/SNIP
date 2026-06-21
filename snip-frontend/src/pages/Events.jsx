@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Topbar from "../components/Topbar";
 import { eventsApi, personsApi } from "../services/api";
 import { fmtDate, number, fullName, nationalId } from "../utils/format";
+import { t, tr, useLang } from "../i18n";
 import {
   FaCalendarAlt,
   FaSearch,
@@ -22,44 +23,92 @@ const empty = {
   source: "",
 };
 
-const eventTypes = ["Naissance", "Mariage", "Divorce", "Décès", "Autre"];
+const eventTypeValues = ["birth", "marriage", "divorce", "death", "other"];
+
+const eventTypeLabels = {
+  fr: {
+    birth: "Naissance",
+    marriage: "Mariage",
+    divorce: "Divorce",
+    death: "Décès",
+    other: "Autre",
+  },
+  en: {
+    birth: "Birth",
+    marriage: "Marriage",
+    divorce: "Divorce",
+    death: "Death",
+    other: "Other",
+  },
+};
+
+function label(lang, fr, en) {
+  return lang === "en" ? en : fr;
+}
+
+function normalizeEventType(value) {
+  const current = String(value || "").toLowerCase();
+
+  if (current === "naissance" || current === "birth") return "birth";
+  if (current === "mariage" || current === "marriage") return "marriage";
+  if (current === "divorce") return "divorce";
+  if (current === "décès" || current === "deces" || current === "death") {
+    return "death";
+  }
+  if (current === "autre" || current === "other") return "other";
+
+  return value || "";
+}
+
+function denormalizeEventType(value, lang) {
+  const key = normalizeEventType(value);
+  return eventTypeLabels[lang]?.[key] || eventTypeLabels.fr[key] || value || "—";
+}
+
+function normalizeEvents(res) {
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res?.data)) return res.data;
+  if (Array.isArray(res?.events)) return res.events;
+  if (Array.isArray(res?.results)) return res.results;
+  if (Array.isArray(res?.data?.events)) return res.data.events;
+  if (Array.isArray(res?.data?.data)) return res.data.data;
+  return [];
+}
+
+function normalizePersons(res) {
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res?.data)) return res.data;
+  if (Array.isArray(res?.persons)) return res.persons;
+  if (Array.isArray(res?.results)) return res.results;
+  if (Array.isArray(res?.data?.persons)) return res.data.persons;
+  if (Array.isArray(res?.data?.data)) return res.data.data;
+  return [];
+}
 
 export default function Events() {
+  const lang = useLang();
+
   const [events, setEvents] = useState([]);
   const [persons, setPersons] = useState([]);
   const [personSearch, setPersonSearch] = useState("");
-
   const [total, setTotal] = useState(0);
   const [q, setQ] = useState("");
   const [type, setType] = useState("");
-
   const [modal, setModal] = useState(null);
   const [viewItem, setViewItem] = useState(null);
   const [form, setForm] = useState(empty);
-
   const [loading, setLoading] = useState(true);
   const [personsLoading, setPersonsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const normalizeEvents = (res) => {
-    if (Array.isArray(res)) return res;
-    if (Array.isArray(res?.data)) return res.data;
-    if (Array.isArray(res?.events)) return res.events;
-    if (Array.isArray(res?.results)) return res.results;
-    if (Array.isArray(res?.data?.events)) return res.data.events;
-    if (Array.isArray(res?.data?.data)) return res.data.data;
-    return [];
-  };
-
-  const normalizePersons = (res) => {
-    if (Array.isArray(res)) return res;
-    if (Array.isArray(res?.data)) return res.data;
-    if (Array.isArray(res?.persons)) return res.persons;
-    if (Array.isArray(res?.results)) return res.results;
-    if (Array.isArray(res?.data?.persons)) return res.data.persons;
-    if (Array.isArray(res?.data?.data)) return res.data.data;
-    return [];
-  };
+  const eventTypes = useMemo(
+    () =>
+      eventTypeValues.map((value) => ({
+        value,
+        label: eventTypeLabels[lang]?.[value] || eventTypeLabels.fr[value],
+      })),
+    [lang]
+  );
 
   const personLabel = (person) => {
     if (!person) return "—";
@@ -69,7 +118,7 @@ export default function Events() {
       person.full_name ||
       person.name ||
       `${person.first_name || ""} ${person.last_name || ""}`.trim() ||
-      "Sans nom";
+      label(lang, "Sans nom", "Unnamed");
 
     const cin =
       nationalId(person) ||
@@ -82,16 +131,16 @@ export default function Events() {
   };
 
   const findPersonLabel = (personId) => {
-    const found = persons.find((p) => String(p.id) === String(personId));
+    const found = persons.find((person) => String(person.id) === String(personId));
     return found ? personLabel(found) : personId || "—";
   };
 
-  const filteredPersons = persons.filter((p) =>
-    personLabel(p).toLowerCase().includes(personSearch.toLowerCase())
+  const filteredPersons = persons.filter((person) =>
+    personLabel(person).toLowerCase().includes(personSearch.toLowerCase())
   );
 
   const matchFrontend = (item, keyword, selectedType) => {
-    const typeValue = item.event_type || item.type || "";
+    const typeValue = normalizeEventType(item.event_type || item.type || "");
 
     const values = [
       item.id,
@@ -100,6 +149,7 @@ export default function Events() {
       item.person,
       item.event_type,
       item.type,
+      denormalizeEventType(typeValue, lang),
       item.title,
       item.description,
       item.source,
@@ -114,9 +164,7 @@ export default function Events() {
       ? values.includes(keyword.toLowerCase())
       : true;
 
-    const matchType = selectedType
-      ? String(typeValue).toLowerCase() === selectedType.toLowerCase()
-      : true;
+    const matchType = selectedType ? typeValue === selectedType : true;
 
     return matchKeyword && matchType;
   };
@@ -168,7 +216,7 @@ export default function Events() {
   useEffect(() => {
     const timer = setTimeout(load, 350);
     return () => clearTimeout(timer);
-  }, [q, type]);
+  }, [q, type, lang]);
 
   const openCreate = () => {
     setForm(empty);
@@ -185,7 +233,7 @@ export default function Events() {
       ...empty,
       ...item,
       person_id: item.person_id || "",
-      event_type: item.event_type || item.type || "",
+      event_type: normalizeEventType(item.event_type || item.type || ""),
       title: item.title || "",
       event_date: item.event_date
         ? String(item.event_date).slice(0, 16)
@@ -205,15 +253,29 @@ export default function Events() {
     try {
       setError("");
 
-      if (!form.person_id) return setError("Veuillez choisir une personne.");
-      if (!form.event_type) return setError("Type d'évènement obligatoire.");
-      if (!form.title) return setError("Titre obligatoire.");
-      if (!form.event_date)
-        return setError("Date de l'évènement obligatoire.");
+      if (!form.person_id) {
+        setError(label(lang, "Veuillez choisir une personne.", "Please choose a person."));
+        return;
+      }
+
+      if (!form.event_type) {
+        setError(label(lang, "Type d'évènement obligatoire.", "Event type is required."));
+        return;
+      }
+
+      if (!form.title) {
+        setError(label(lang, "Titre obligatoire.", "Title is required."));
+        return;
+      }
+
+      if (!form.event_date) {
+        setError(label(lang, "Date de l'évènement obligatoire.", "Event date is required."));
+        return;
+      }
 
       const payload = {
         person_id: form.person_id,
-        event_type: form.event_type,
+        event_type: denormalizeEventType(form.event_type, "fr"),
         title: form.title,
         description: form.description,
         event_date: form.event_date,
@@ -232,19 +294,19 @@ export default function Events() {
       setQ("");
       setType("");
       await load();
-    } catch (e) {
-      setError(e.message || "Erreur lors de l'enregistrement.");
+    } catch (error) {
+      setError(error.message || t("events.saveError"));
     }
   };
 
   const remove = async (item) => {
-    if (!window.confirm("Supprimer cet évènement ?")) return;
+    if (!window.confirm(t("events.deleteConfirm"))) return;
 
     try {
       await eventsApi.remove(item.id);
       await load();
-    } catch (e) {
-      alert(e.message || "Suppression impossible.");
+    } catch (error) {
+      alert(error.message || t("events.deleteError"));
     }
   };
 
@@ -254,7 +316,7 @@ export default function Events() {
 
   return (
     <>
-      <Topbar title="Gestion des évènements" />
+      <Topbar title={t("events.title")} />
 
       <div className="events-page">
         <div className="events-stats">
@@ -264,7 +326,7 @@ export default function Events() {
             </div>
 
             <div>
-              <h3>Total évènements</h3>
+              <h3>{t("events.total")}</h3>
               <p>{loading ? "…" : number(displayedTotal || 0)}</p>
             </div>
           </div>
@@ -273,30 +335,38 @@ export default function Events() {
         <div className="events-table-box">
           <div className="events-table-header">
             <div>
-              <h3>Liste des évènements</h3>
-              <span>Historique des faits liés aux personnes</span>
+              <h3>{t("events.list")}</h3>
+              <span>
+                {label(
+                  lang,
+                  "Historique des faits liés aux personnes",
+                  "History of facts related to persons"
+                )}
+              </span>
             </div>
 
-            <button className="event-add-btn" onClick={openCreate}>
-              <FaPlus /> Ajouter
+            <button type="button" className="event-add-btn" onClick={openCreate}>
+              <FaPlus /> {t("common.add")}
             </button>
           </div>
 
           <div className="events-filters">
             <div className="events-search-box">
               <FaSearch className="events-search-icon" />
+
               <input
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Rechercher type, titre, personne, source..."
+                onChange={(event) => setQ(event.target.value)}
+                placeholder={t("events.searchPlaceholder")}
               />
             </div>
 
-            <select value={type} onChange={(e) => setType(e.target.value)}>
-              <option value="">Tous les types</option>
-              {eventTypes.map((t) => (
-                <option key={t} value={t}>
-                  {t}
+            <select value={type} onChange={(event) => setType(event.target.value)}>
+              <option value="">{t("events.allTypes")}</option>
+
+              {eventTypes.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
                 </option>
               ))}
             </select>
@@ -306,13 +376,13 @@ export default function Events() {
             <table className="events-table">
               <thead>
                 <tr>
-                  <th>Type</th>
-                  <th>Titre</th>
-                  <th>Personne</th>
-                  <th>Date</th>
-                  <th>Source</th>
-                  <th>Description</th>
-                  <th className="events-actions-col">Actions</th>
+                  <th>{t("events.type")}</th>
+                  <th>{label(lang, "Titre", "Title")}</th>
+                  <th>{t("events.person")}</th>
+                  <th>{t("events.date")}</th>
+                  <th>{t("common.source")}</th>
+                  <th>{t("events.description")}</th>
+                  <th className="events-actions-col">{t("common.actions")}</th>
                 </tr>
               </thead>
 
@@ -320,7 +390,7 @@ export default function Events() {
                 {loading && (
                   <tr>
                     <td colSpan="7" className="events-empty">
-                      Chargement des évènements...
+                      {t("events.loadingData")}
                     </td>
                   </tr>
                 )}
@@ -328,7 +398,7 @@ export default function Events() {
                 {!loading && events.length === 0 && (
                   <tr>
                     <td colSpan="7" className="events-empty">
-                      Aucun évènement trouvé
+                      {t("events.notFound")}
                     </td>
                   </tr>
                 )}
@@ -338,7 +408,7 @@ export default function Events() {
                     <tr key={item.id}>
                       <td>
                         <span className="event-type-pill">
-                          {item.event_type || item.type || "—"}
+                          {denormalizeEventType(item.event_type || item.type, lang)}
                         </span>
                       </td>
 
@@ -361,24 +431,27 @@ export default function Events() {
                       <td>
                         <div className="event-action-buttons">
                           <button
+                            type="button"
                             className="event-icon-action event-view-btn"
-                            data-tooltip="Voir"
+                            data-tooltip={t("common.view")}
                             onClick={() => setViewItem(item)}
                           >
                             <FaEye />
                           </button>
 
                           <button
+                            type="button"
                             className="event-icon-action event-edit-btn"
-                            data-tooltip="Modifier"
+                            data-tooltip={t("common.edit")}
                             onClick={() => openEdit(item)}
                           >
                             <FaEdit />
                           </button>
 
                           <button
+                            type="button"
                             className="event-icon-action event-delete-btn"
-                            data-tooltip="Supprimer"
+                            data-tooltip={t("common.delete")}
                             onClick={() => remove(item)}
                           >
                             <FaTrash />
@@ -393,8 +466,10 @@ export default function Events() {
 
           <div className="events-pagination">
             <span>
-              Affichage de {events.length} sur {number(displayedTotal || 0)}{" "}
-              évènement(s)
+              {tr("events.display", {
+                shown: events.length,
+                total: number(displayedTotal || 0),
+              })}
             </span>
           </div>
         </div>
@@ -404,24 +479,31 @@ export default function Events() {
         <div className="events-modal-overlay">
           <div className="events-modal-box">
             <button
+              type="button"
               className="events-modal-close"
               onClick={() => setViewItem(null)}
             >
               <FaTimes />
             </button>
 
-            <h3>Détail de l'évènement</h3>
+            <h3>{t("events.detail")}</h3>
 
             <div className="event-detail-grid">
               <Info
-                label="Type"
-                value={viewItem.event_type || viewItem.type || "—"}
+                label={t("events.type")}
+                value={denormalizeEventType(
+                  viewItem.event_type || viewItem.type,
+                  lang
+                )}
               />
 
-              <Info label="Titre" value={viewItem.title || "—"} />
+              <Info
+                label={label(lang, "Titre", "Title")}
+                value={viewItem.title || "—"}
+              />
 
               <Info
-                label="Personne"
+                label={t("events.person")}
                 value={
                   viewItem.person_name ||
                   viewItem.person ||
@@ -430,15 +512,18 @@ export default function Events() {
               />
 
               <Info
-                label="Date"
+                label={t("events.date")}
                 value={fmtDate(viewItem.event_date || viewItem.date)}
               />
 
-              <Info label="Source" value={viewItem.source || "—"} />
+              <Info label={t("common.source")} value={viewItem.source || "—"} />
 
               <Info
-                label="Description"
-                value={viewItem.description || "Aucune description"}
+                label={t("events.description")}
+                value={
+                  viewItem.description ||
+                  label(lang, "Aucune description", "No description")
+                }
                 wide
               />
             </div>
@@ -450,17 +535,14 @@ export default function Events() {
         <div className="events-modal-overlay">
           <div className="events-modal-box">
             <button
+              type="button"
               className="events-modal-close"
               onClick={() => setModal(null)}
             >
               <FaTimes />
             </button>
 
-            <h3>
-              {modal === "create"
-                ? "Ajouter un évènement"
-                : "Modifier évènement"}
-            </h3>
+            <h3>{modal === "create" ? t("events.add") : t("events.edit")}</h3>
 
             {error && <div className="events-error">{error}</div>}
 
@@ -469,12 +551,12 @@ export default function Events() {
                 <input
                   placeholder={
                     personsLoading
-                      ? "Chargement des personnes..."
-                      : "Rechercher une personne par nom ou CIN"
+                      ? label(lang, "Chargement des personnes...", "Loading persons...")
+                      : t("events.searchPerson")
                   }
                   value={personSearch}
-                  onChange={(e) => {
-                    setPersonSearch(e.target.value);
+                  onChange={(event) => {
+                    setPersonSearch(event.target.value);
                     setForm({ ...form, person_id: "" });
                   }}
                 />
@@ -483,7 +565,7 @@ export default function Events() {
                   <div className="person-suggestions">
                     {filteredPersons.length === 0 && (
                       <div className="person-suggestion-empty">
-                        Aucune personne trouvée
+                        {t("events.noPerson")}
                       </div>
                     )}
 
@@ -504,21 +586,24 @@ export default function Events() {
               </div>
 
               <input
-                placeholder="Titre de l'évènement"
+                placeholder={label(lang, "Titre de l'évènement", "Event title")}
                 value={form.title || ""}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                onChange={(event) =>
+                  setForm({ ...form, title: event.target.value })
+                }
               />
 
               <select
                 value={form.event_type || ""}
-                onChange={(e) =>
-                  setForm({ ...form, event_type: e.target.value })
+                onChange={(event) =>
+                  setForm({ ...form, event_type: event.target.value })
                 }
               >
-                <option value="">Type d'évènement</option>
-                {eventTypes.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
+                <option value="">{t("events.type")}</option>
+
+                {eventTypes.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
                   </option>
                 ))}
               </select>
@@ -526,36 +611,39 @@ export default function Events() {
               <input
                 type="datetime-local"
                 value={form.event_date || ""}
-                onChange={(e) =>
-                  setForm({ ...form, event_date: e.target.value })
+                onChange={(event) =>
+                  setForm({ ...form, event_date: event.target.value })
                 }
               />
 
               <input
-                placeholder="Source"
+                placeholder={t("common.source")}
                 value={form.source || ""}
-                onChange={(e) => setForm({ ...form, source: e.target.value })}
+                onChange={(event) =>
+                  setForm({ ...form, source: event.target.value })
+                }
               />
 
               <textarea
-                placeholder="Description"
+                placeholder={t("events.description")}
                 value={form.description || ""}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
+                onChange={(event) =>
+                  setForm({ ...form, description: event.target.value })
                 }
               />
             </div>
 
             <div className="events-modal-actions">
               <button
+                type="button"
                 className="events-cancel-btn"
                 onClick={() => setModal(null)}
               >
-                Annuler
+                {t("common.cancel")}
               </button>
 
-              <button className="events-save-btn" onClick={save}>
-                Enregistrer
+              <button type="button" className="events-save-btn" onClick={save}>
+                {t("common.save")}
               </button>
             </div>
           </div>

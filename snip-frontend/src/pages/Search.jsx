@@ -11,9 +11,15 @@ import {
 import Topbar from "../components/Topbar";
 import { personsApi, searchApi } from "../services/api";
 import { fullName, nationalId, phone, fmtDate } from "../utils/format";
+import { t, useLang } from "../i18n";
 import "../styles/persons.css";
 
+function label(lang, fr, en) {
+  return lang === "en" ? en : fr;
+}
+
 export default function Search() {
+  const lang = useLang();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -40,11 +46,15 @@ export default function Search() {
         try {
           const res = await searchApi.global(q);
           result = res.data || res.results || res.persons || [];
-          setSource("Recherche globale");
+          setSource(label(lang, "Recherche globale", "Global search"));
         } catch {
-          const res = await personsApi.list({ search: q, query: q, keyword: q });
-          const all = res.data || res.persons || [];
+          const res = await personsApi.list({
+            search: q,
+            query: q,
+            keyword: q,
+          });
 
+          const all = res.data || res.persons || [];
           const qLower = q.toLowerCase();
 
           result = all.filter((p) => {
@@ -65,7 +75,8 @@ export default function Search() {
 
             return values.includes(qLower);
           });
-          setSource("Recherche personnes");
+
+          setSource(label(lang, "Recherche personnes", "Persons search"));
         }
 
         setRows(Array.isArray(result) ? result : []);
@@ -78,19 +89,23 @@ export default function Search() {
     }, 350);
 
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, lang]);
 
   return (
     <>
-      <Topbar title="Recherche avancée" />
+      <Topbar title={t("search.advanced")} />
 
       <div className="persons-page">
         <div className="table-box pro-table-box">
           <div className="table-header">
             <div>
-              <h3>Recherche rapide</h3>
+              <h3>{t("search.advanced")}</h3>
               <span>
-                Recherche par nom, prénom, CIN, téléphone, email ou identifiant
+                {label(
+                  lang,
+                  "Recherche par nom, prénom, CIN, téléphone, email ou identifiant",
+                  "Search by last name, first name, ID, phone, email or identifier"
+                )}
               </span>
             </div>
           </div>
@@ -98,10 +113,11 @@ export default function Search() {
           <div className="filters-bar">
             <div className="search-box">
               <FaSearch className="search-icon" />
+
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Saisir un nom, CIN, téléphone..."
+                placeholder={t("search.placeholder")}
                 autoFocus
               />
             </div>
@@ -110,12 +126,21 @@ export default function Search() {
           <div className="search-summary">
             <div>
               <FaUser />
+
               <span>
                 {loading
-                  ? "Recherche en cours..."
+                  ? label(lang, "Recherche en cours...", "Searching...")
                   : search
-                  ? `${rows.length} résultat(s) trouvé(s)`
-                  : "Saisir un mot-clé pour lancer la recherche"}
+                  ? label(
+                      lang,
+                      `${rows.length} résultat(s) trouvé(s)`,
+                      `${rows.length} result(s) found`
+                    )
+                  : label(
+                      lang,
+                      "Saisir un mot-clé pour lancer la recherche",
+                      "Enter a keyword to start searching"
+                    )}
               </span>
             </div>
 
@@ -126,11 +151,11 @@ export default function Search() {
             <table className="persons-table">
               <thead>
                 <tr>
-                  <th>Personne</th>
-                  <th>CIN</th>
-                  <th>Téléphone</th>
-                  <th>Naissance</th>
-                  <th className="actions-col">Action</th>
+                  <th>{t("persons.person")}</th>
+                  <th>{t("persons.cin")}</th>
+                  <th>{t("persons.phone")}</th>
+                  <th>{t("persons.birth")}</th>
+                  <th className="actions-col">{t("common.actions")}</th>
                 </tr>
               </thead>
 
@@ -138,7 +163,7 @@ export default function Search() {
                 {loading && (
                   <tr>
                     <td colSpan="5" className="empty-row">
-                      Recherche en cours...
+                      {label(lang, "Recherche en cours...", "Searching...")}
                     </td>
                   </tr>
                 )}
@@ -147,8 +172,8 @@ export default function Search() {
                   <tr>
                     <td colSpan="5" className="empty-row">
                       {search
-                        ? "Aucun résultat trouvé"
-                        : "Saisir une recherche"}
+                        ? t("search.noResult")
+                        : label(lang, "Saisir une recherche", "Enter a search")}
                     </td>
                   </tr>
                 )}
@@ -161,6 +186,7 @@ export default function Search() {
                           <div className="person-avatar">
                             {fullName(p).charAt(0).toUpperCase()}
                           </div>
+
                           <div>
                             <h4>{fullName(p)}</h4>
                             <span>ID : {String(p.id || "").slice(0, 8)}...</span>
@@ -190,8 +216,9 @@ export default function Search() {
                       <td>
                         <div className="action-buttons">
                           <button
+                            type="button"
                             className="icon-action view-btn"
-                            data-tooltip="Voir"
+                            data-tooltip={t("common.view")}
                             onClick={() => navigate(`/persons/${p.id}`)}
                           >
                             <FaEye />
@@ -207,8 +234,16 @@ export default function Search() {
           <div className="pagination">
             <span>
               {search
-                ? `Résultats affichés : ${rows.length}`
-                : "Recherche connectée au backend SNIP"}
+                ? label(
+                    lang,
+                    `Résultats affichés : ${rows.length}`,
+                    `Displayed results: ${rows.length}`
+                  )
+                : label(
+                    lang,
+                    "Recherche connectée au backend SNIP",
+                    "Search connected to SNIP backend"
+                  )}
             </span>
           </div>
         </div>

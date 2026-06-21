@@ -2,6 +2,7 @@ import "../styles/relationships.css";
 import { useEffect, useMemo, useState } from "react";
 import Topbar from "../components/Topbar";
 import { personsApi, relationshipsApi } from "../services/api";
+import { t, tr, useLang } from "../i18n";
 import {
   FaPeopleArrows,
   FaSearch,
@@ -21,32 +22,54 @@ const emptyForm = {
   notes: "",
 };
 
-const relationTypes = [
-  { value: "parent", label: "Parent" },
-  { value: "child", label: "Enfant" },
-  { value: "spouse", label: "Conjoint" },
-  { value: "sibling", label: "Frère / Sœur" },
-  { value: "relative", label: "Famille" },
-  { value: "guardian", label: "Tuteur" },
-  { value: "professional", label: "Professionnel" },
-  { value: "legal", label: "Légal" },
+const relationTypeValues = [
+  "parent",
+  "child",
+  "spouse",
+  "sibling",
+  "relative",
+  "guardian",
+  "professional",
+  "legal",
 ];
 
-function formatDate(value) {
+const relationTypeLabels = {
+  fr: {
+    parent: "Parent",
+    child: "Enfant",
+    spouse: "Conjoint",
+    sibling: "Frère / Sœur",
+    relative: "Famille",
+    guardian: "Tuteur",
+    professional: "Professionnel",
+    legal: "Légal",
+  },
+  en: {
+    parent: "Parent",
+    child: "Child",
+    spouse: "Spouse",
+    sibling: "Sibling",
+    relative: "Relative",
+    guardian: "Guardian",
+    professional: "Professional",
+    legal: "Legal",
+  },
+};
+
+function formatDate(value, lang) {
   if (!value) return "—";
+
   try {
-    return new Date(value).toLocaleDateString("fr-FR");
+    return new Date(value).toLocaleDateString(lang === "en" ? "en-US" : "fr-FR");
   } catch {
     return String(value);
   }
 }
 
-function formatNumber(value) {
-  return new Intl.NumberFormat("fr-FR").format(value || 0);
-}
-
-function relationLabel(value) {
-  return relationTypes.find((item) => item.value === value)?.label || value || "—";
+function formatNumber(value, lang) {
+  return new Intl.NumberFormat(lang === "en" ? "en-US" : "fr-FR").format(
+    value || 0
+  );
 }
 
 function normalizeRelations(payload) {
@@ -85,6 +108,8 @@ function cleanDateForInput(value) {
 }
 
 export default function Relationships() {
+  const lang = useLang();
+
   const [relationships, setRelationships] = useState([]);
   const [persons, setPersons] = useState([]);
   const [q, setQ] = useState("");
@@ -97,6 +122,19 @@ export default function Relationships() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const relationTypes = useMemo(
+    () =>
+      relationTypeValues.map((value) => ({
+        value,
+        label: relationTypeLabels[lang]?.[value] || relationTypeLabels.fr[value],
+      })),
+    [lang]
+  );
+
+  const relationLabel = (value) => {
+    return relationTypes.find((item) => item.value === value)?.label || value || "—";
+  };
 
   const personName = (person) => {
     if (!person) return "—";
@@ -111,7 +149,9 @@ export default function Relationships() {
 
     const cin = person.cin || person.national_id || person.nationalId || "";
 
-    return cin ? `${fullName || "Personne sans nom"} — ${cin}` : fullName || "Personne sans nom";
+    return cin
+      ? `${fullName || t("persons.notFound")} — ${cin}`
+      : fullName || t("persons.notFound");
   };
 
   const getPerson = (id) => {
@@ -153,7 +193,7 @@ export default function Relationships() {
       setPersons(data);
       return data;
     } catch (error) {
-      console.error("Erreur chargement personnes:", error);
+      console.error(error);
       setPersons([]);
       return [];
     }
@@ -188,7 +228,7 @@ export default function Relationships() {
           });
         });
       } catch {
-        // Tsy ajanona ny page raha olona iray tsy manana relation.
+        continue;
       }
     }
 
@@ -209,7 +249,7 @@ export default function Relationships() {
 
       setRelationships(rows || []);
     } catch (error) {
-      setError(error.message || "Erreur lors du chargement des relations.");
+      setError(error.message || t("relationships.saveError"));
     } finally {
       setLoading(false);
     }
@@ -267,7 +307,10 @@ export default function Relationships() {
         getRelationNotes(relation),
         relation.start_date,
         relation.end_date,
-        displayPerson(relation.person_id, getPersonFallbackFromRelation(relation, "main")),
+        displayPerson(
+          relation.person_id,
+          getPersonFallbackFromRelation(relation, "main")
+        ),
         displayPerson(
           relation.related_person_id,
           getPersonFallbackFromRelation(relation, "related")
@@ -282,7 +325,7 @@ export default function Relationships() {
 
       return matchKeyword && matchType;
     });
-  }, [relationships, q, type, persons]);
+  }, [relationships, q, type, persons, lang]);
 
   const openCreate = async () => {
     setForm(emptyForm);
@@ -307,9 +350,14 @@ export default function Relationships() {
       notes: getRelationNotes(relation),
     });
 
-    setPersonSearch(displayPerson(personId, getPersonFallbackFromRelation(relation, "main")));
+    setPersonSearch(
+      displayPerson(personId, getPersonFallbackFromRelation(relation, "main"))
+    );
     setRelatedSearch(
-      displayPerson(relatedPersonId, getPersonFallbackFromRelation(relation, "related"))
+      displayPerson(
+        relatedPersonId,
+        getPersonFallbackFromRelation(relation, "related")
+      )
     );
 
     setError("");
@@ -321,14 +369,15 @@ export default function Relationships() {
       setSaving(true);
       setError("");
 
-      if (!form.person_id) return setError("Veuillez sélectionner la personne principale.");
-      if (!form.related_person_id) return setError("Veuillez sélectionner la personne liée.");
-
-      if (String(form.person_id) === String(form.related_person_id)) {
-        return setError("La personne principale et la personne liée doivent être différentes.");
+      if (!form.person_id || !form.related_person_id || !form.relationship_type) {
+        setError(t("relationships.required"));
+        return;
       }
 
-      if (!form.relationship_type) return setError("Veuillez choisir le type de relation.");
+      if (String(form.person_id) === String(form.related_person_id)) {
+        setError(t("relationships.required"));
+        return;
+      }
 
       const payload = {
         person_id: form.person_id,
@@ -349,27 +398,27 @@ export default function Relationships() {
       setModal(null);
       await load();
     } catch (error) {
-      setError(error.message || "Erreur lors de l’enregistrement.");
+      setError(error.message || t("relationships.saveError"));
     } finally {
       setSaving(false);
     }
   };
 
   const remove = async (relation) => {
-    const confirmation = window.confirm("Voulez-vous vraiment supprimer cette relation ?");
+    const confirmation = window.confirm(t("relationships.deleteConfirm"));
     if (!confirmation) return;
 
     try {
       await relationshipsApi.remove(relation.id);
       await load();
     } catch (error) {
-      alert(error.message || "Suppression impossible.");
+      alert(error.message || t("relationships.deleteError"));
     }
   };
 
   return (
     <>
-      <Topbar title="Gestion des relations" />
+      <Topbar title={t("relationships.title")} />
 
       <div className="relationships-page">
         <div className="relationships-stats">
@@ -379,8 +428,8 @@ export default function Relationships() {
             </div>
 
             <div>
-              <h3>Total relations</h3>
-              <p>{loading ? "…" : formatNumber(filteredRelationships.length)}</p>
+              <h3>{t("relationships.total")}</h3>
+              <p>{loading ? "…" : formatNumber(filteredRelationships.length, lang)}</p>
             </div>
           </div>
         </div>
@@ -388,27 +437,33 @@ export default function Relationships() {
         <div className="relationships-table-box">
           <div className="relationships-table-header">
             <div>
-              <h3>Liste des relations</h3>
-              <span>Relations entre personnes selon le modèle UML du SNIP</span>
+              <h3>{t("relationships.list")}</h3>
+              <span>{t("relationships.subtitle")}</span>
             </div>
 
-            <button className="relationship-add-btn" onClick={openCreate}>
-              <FaPlus /> Ajouter
+            <button
+              type="button"
+              className="relationship-add-btn"
+              onClick={openCreate}
+            >
+              <FaPlus /> {t("common.add")}
             </button>
           </div>
 
           <div className="relationships-filters">
             <div className="relationships-search-box">
               <FaSearch className="relationships-search-icon" />
+
               <input
                 value={q}
                 onChange={(event) => setQ(event.target.value)}
-                placeholder="Rechercher une personne, un type de relation, une note..."
+                placeholder={t("relationships.searchPlaceholder")}
               />
             </div>
 
             <select value={type} onChange={(event) => setType(event.target.value)}>
-              <option value="">Tous les types</option>
+              <option value="">{t("relationships.allTypes")}</option>
+
               {relationTypes.map((item) => (
                 <option key={item.value} value={item.value}>
                   {item.label}
@@ -423,13 +478,13 @@ export default function Relationships() {
             <table className="relationships-table">
               <thead>
                 <tr>
-                  <th>Personne principale</th>
-                  <th>Type de relation</th>
-                  <th>Personne liée</th>
-                  <th>Date début de la relation</th>
-                  <th>Date fin de la relation</th>
-                  <th>Notes</th>
-                  <th className="relationships-actions-col">Actions</th>
+                  <th>{t("relationships.person1")}</th>
+                  <th>{t("relationships.type")}</th>
+                  <th>{t("relationships.person2")}</th>
+                  <th>{t("relationships.startDate")}</th>
+                  <th>{t("relationships.endDate")}</th>
+                  <th>{t("relationships.notes")}</th>
+                  <th className="relationships-actions-col">{t("common.actions")}</th>
                 </tr>
               </thead>
 
@@ -437,7 +492,7 @@ export default function Relationships() {
                 {loading && (
                   <tr>
                     <td colSpan="7" className="relationships-empty">
-                      Chargement des relations...
+                      {t("relationships.loadingData")}
                     </td>
                   </tr>
                 )}
@@ -445,7 +500,7 @@ export default function Relationships() {
                 {!loading && filteredRelationships.length === 0 && (
                   <tr>
                     <td colSpan="7" className="relationships-empty">
-                      Aucune relation trouvée
+                      {t("relationships.notFound")}
                     </td>
                   </tr>
                 )}
@@ -476,16 +531,18 @@ export default function Relationships() {
                           )}
                         </td>
 
-                        <td>{formatDate(relation.start_date)}</td>
-                        <td>{formatDate(relation.end_date)}</td>
-                        <td className="relationship-notes">{getRelationNotes(relation) || "—"}</td>
+                        <td>{formatDate(relation.start_date, lang)}</td>
+                        <td>{formatDate(relation.end_date, lang)}</td>
+                        <td className="relationship-notes">
+                          {getRelationNotes(relation) || "—"}
+                        </td>
 
                         <td>
                           <div className="relationship-action-buttons">
                             <button
                               type="button"
                               className="relationship-icon-action relationship-view-btn"
-                              title="Voir"
+                              title={t("common.view")}
                               onClick={() => setViewItem(relation)}
                             >
                               <FaEye />
@@ -494,7 +551,7 @@ export default function Relationships() {
                             <button
                               type="button"
                               className="relationship-icon-action relationship-edit-btn"
-                              title="Modifier"
+                              title={t("common.edit")}
                               onClick={() => openEdit(relation)}
                             >
                               <FaEdit />
@@ -503,7 +560,7 @@ export default function Relationships() {
                             <button
                               type="button"
                               className="relationship-icon-action relationship-delete-btn"
-                              title="Supprimer"
+                              title={t("common.delete")}
                               onClick={() => remove(relation)}
                             >
                               <FaTrash />
@@ -518,7 +575,12 @@ export default function Relationships() {
           </div>
 
           <div className="relationships-pagination">
-            <span>Affichage de {filteredRelationships.length} relation(s)</span>
+            <span>
+              {tr("relationships.display", {
+                shown: formatNumber(filteredRelationships.length, lang),
+                total: formatNumber(relationships.length, lang),
+              })}
+            </span>
           </div>
         </div>
       </div>
@@ -534,11 +596,11 @@ export default function Relationships() {
               <FaTimes />
             </button>
 
-            <h3>Détail de la relation</h3>
+            <h3>{t("relationships.detail")}</h3>
 
             <div className="relationship-detail-grid">
               <Info
-                label="Personne principale"
+                label={t("relationships.person1")}
                 value={displayPerson(
                   viewItem.person_id,
                   getPersonFallbackFromRelation(viewItem, "main")
@@ -546,17 +608,33 @@ export default function Relationships() {
               />
 
               <Info
-                label="Personne liée"
+                label={t("relationships.person2")}
                 value={displayPerson(
                   viewItem.related_person_id,
                   getPersonFallbackFromRelation(viewItem, "related")
                 )}
               />
 
-              <Info label="Type de relation" value={relationLabel(getRelationType(viewItem))} />
-              <Info label="Date début de la relation" value={formatDate(viewItem.start_date)} />
-              <Info label="Date fin de la relation" value={formatDate(viewItem.end_date)} />
-              <Info label="Notes" value={getRelationNotes(viewItem) || "—"} wide />
+              <Info
+                label={t("relationships.type")}
+                value={relationLabel(getRelationType(viewItem))}
+              />
+
+              <Info
+                label={t("relationships.startDate")}
+                value={formatDate(viewItem.start_date, lang)}
+              />
+
+              <Info
+                label={t("relationships.endDate")}
+                value={formatDate(viewItem.end_date, lang)}
+              />
+
+              <Info
+                label={t("relationships.notes")}
+                value={getRelationNotes(viewItem) || "—"}
+                wide
+              />
             </div>
           </div>
         </div>
@@ -573,13 +651,17 @@ export default function Relationships() {
               <FaTimes />
             </button>
 
-            <h3>{modal === "create" ? "Ajouter une relation" : "Modifier la relation"}</h3>
+            <h3>
+              {modal === "create"
+                ? t("relationships.add")
+                : t("relationships.edit")}
+            </h3>
 
             {error && <div className="relationships-error">{error}</div>}
 
             <div className="relationships-form-grid">
               <PersonPicker
-                label="Personne principale"
+                label={t("relationships.person1")}
                 value={personSearch}
                 onChange={(value) => {
                   setPersonSearch(value);
@@ -595,7 +677,7 @@ export default function Relationships() {
               />
 
               <PersonPicker
-                label="Personne liée"
+                label={t("relationships.person2")}
                 value={relatedSearch}
                 onChange={(value) => {
                   setRelatedSearch(value);
@@ -604,14 +686,18 @@ export default function Relationships() {
                 persons={filteredPersons(relatedSearch, form.person_id)}
                 selectedId={form.related_person_id}
                 onSelect={(person) => {
-                  setForm((previous) => ({ ...previous, related_person_id: person.id }));
+                  setForm((previous) => ({
+                    ...previous,
+                    related_person_id: person.id,
+                  }));
                   setRelatedSearch(personName(person));
                 }}
                 personName={personName}
               />
 
               <div className="relationship-field">
-                <label>Type de relation</label>
+                <label>{t("relationships.type")}</label>
+
                 <select
                   value={form.relationship_type}
                   onChange={(event) =>
@@ -621,7 +707,8 @@ export default function Relationships() {
                     }))
                   }
                 >
-                  <option value="">Sélectionner un type</option>
+                  <option value="">{t("relationships.allTypes")}</option>
+
                   {relationTypes.map((item) => (
                     <option key={item.value} value={item.value}>
                       {item.label}
@@ -631,7 +718,7 @@ export default function Relationships() {
               </div>
 
               <DateField
-                label="Date début de la relation"
+                label={t("relationships.startDate")}
                 value={form.start_date}
                 onChange={(value) =>
                   setForm((previous) => ({ ...previous, start_date: value }))
@@ -639,7 +726,7 @@ export default function Relationships() {
               />
 
               <DateField
-                label="Date fin de la relation"
+                label={t("relationships.endDate")}
                 value={form.end_date}
                 onChange={(value) =>
                   setForm((previous) => ({ ...previous, end_date: value }))
@@ -647,12 +734,16 @@ export default function Relationships() {
               />
 
               <div className="relationship-field relationship-field-wide">
-                <label>Notes / description</label>
+                <label>{t("relationships.notes")}</label>
+
                 <textarea
-                  placeholder="Exemple : relation familiale confirmée, lien légal, tuteur officiel..."
+                  placeholder={t("relationships.notes")}
                   value={form.notes}
                   onChange={(event) =>
-                    setForm((previous) => ({ ...previous, notes: event.target.value }))
+                    setForm((previous) => ({
+                      ...previous,
+                      notes: event.target.value,
+                    }))
                   }
                 />
               </div>
@@ -665,7 +756,7 @@ export default function Relationships() {
                 onClick={() => setModal(null)}
                 disabled={saving}
               >
-                Annuler
+                {t("common.cancel")}
               </button>
 
               <button
@@ -674,7 +765,7 @@ export default function Relationships() {
                 onClick={save}
                 disabled={saving}
               >
-                {saving ? "Enregistrement..." : "Enregistrer"}
+                {saving ? t("common.loading") : t("common.save")}
               </button>
             </div>
           </div>
@@ -700,13 +791,15 @@ function PersonPicker({
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder={`Rechercher : ${label.toLowerCase()}`}
+        placeholder={`${t("common.search")} : ${label.toLowerCase()}`}
       />
 
       {value && !selectedId && (
         <div className="relationship-picker-list">
           {persons.length === 0 && (
-            <div className="relationship-picker-empty">Aucune personne trouvée</div>
+            <div className="relationship-picker-empty">
+              {t("relationships.noPerson")}
+            </div>
           )}
 
           {persons.slice(0, 8).map((person) => (

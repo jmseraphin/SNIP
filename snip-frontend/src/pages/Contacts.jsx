@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Topbar from "../components/Topbar";
 import { contactsApi, personsApi } from "../services/api";
 import { number, fullName, nationalId } from "../utils/format";
+import { t, tr, useLang } from "../i18n";
 import {
   FaPhoneAlt,
   FaSearch,
@@ -17,10 +18,50 @@ import {
 const emptyForm = {
   id: "",
   person_id: "",
-  type: "Téléphone",
+  type: "phone",
   value: "",
   is_primary: false,
 };
+
+const contactTypeValues = ["phone", "email", "whatsapp", "other"];
+
+const contactTypeLabels = {
+  fr: {
+    phone: "Téléphone",
+    email: "Email",
+    whatsapp: "WhatsApp",
+    other: "Autre",
+  },
+  en: {
+    phone: "Phone",
+    email: "Email",
+    whatsapp: "WhatsApp",
+    other: "Other",
+  },
+};
+
+function label(lang, fr, en) {
+  return lang === "en" ? en : fr;
+}
+
+function normalizeContactType(value) {
+  const current = String(value || "").toLowerCase();
+
+  if (current === "téléphone" || current === "telephone" || current === "phone") {
+    return "phone";
+  }
+
+  if (current === "email") return "email";
+  if (current === "whatsapp") return "whatsapp";
+  if (current === "autre" || current === "other") return "other";
+
+  return value || "phone";
+}
+
+function displayContactType(value, lang) {
+  const key = normalizeContactType(value);
+  return contactTypeLabels[lang]?.[key] || contactTypeLabels.fr[key] || value || "—";
+}
 
 function normalizeList(res, keys = []) {
   if (Array.isArray(res)) return res;
@@ -38,7 +79,7 @@ function normalizeList(res, keys = []) {
   return [];
 }
 
-function personLabel(person) {
+function personLabel(person, lang) {
   if (!person) return "—";
 
   const name =
@@ -49,7 +90,7 @@ function personLabel(person) {
     `${person.last_name || person.nom || ""} ${
       person.first_name || person.prenom || ""
     }`.trim() ||
-    "Personne sans nom";
+    label(lang, "Personne sans nom", "Unnamed person");
 
   const cin =
     nationalId(person) ||
@@ -69,17 +110,17 @@ function getContactPersonId(item) {
   return item.person_id || item.personId || item.person?.id || "";
 }
 
-function getPersonName(item, persons = []) {
+function getPersonName(item, persons = [], lang) {
   if (item.person_name) return item.person_name;
   if (item.personName) return item.personName;
   if (item.full_name) return item.full_name;
   if (item.fullName) return item.fullName;
-  if (item.person) return personLabel(item.person);
+  if (item.person) return personLabel(item.person, lang);
 
   const personId = getContactPersonId(item);
-  const found = persons.find((p) => String(p.id) === String(personId));
+  const found = persons.find((person) => String(person.id) === String(personId));
 
-  return found ? personLabel(found) : personId || "—";
+  return found ? personLabel(found, lang) : personId || "—";
 }
 
 function getContactType(item) {
@@ -95,6 +136,8 @@ function isPrimary(item) {
 }
 
 export default function Contacts() {
+  const lang = useLang();
+
   const [contacts, setContacts] = useState([]);
   const [persons, setPersons] = useState([]);
   const [q, setQ] = useState("");
@@ -105,6 +148,15 @@ export default function Contacts() {
   const [personSearch, setPersonSearch] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const contactTypes = useMemo(
+    () =>
+      contactTypeValues.map((value) => ({
+        value,
+        label: contactTypeLabels[lang]?.[value] || contactTypeLabels.fr[value],
+      })),
+    [lang]
+  );
 
   async function loadContacts() {
     try {
@@ -138,12 +190,14 @@ export default function Contacts() {
 
   const filteredContacts = useMemo(() => {
     const keyword = String(q || "").toLowerCase().trim();
+
     if (!keyword) return contacts;
 
     return contacts.filter((item) =>
       [
-        getPersonName(item, persons),
+        getPersonName(item, persons, lang),
         getContactType(item),
+        displayContactType(getContactType(item), lang),
         getContactValue(item),
         getContactPersonId(item),
         getContactId(item),
@@ -153,10 +207,11 @@ export default function Contacts() {
         .toLowerCase()
         .includes(keyword)
     );
-  }, [contacts, persons, q]);
+  }, [contacts, persons, q, lang]);
 
   const filteredPersonsForPicker = useMemo(() => {
     const keyword = String(personSearch || "").toLowerCase().trim();
+
     if (!keyword) return persons;
 
     return persons.filter((person) =>
@@ -175,14 +230,14 @@ export default function Contacts() {
         person.phone,
         person.telephone,
         person.email,
-        personLabel(person),
+        personLabel(person, lang),
       ]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
         .includes(keyword)
     );
-  }, [persons, personSearch]);
+  }, [persons, personSearch, lang]);
 
   function openCreate() {
     setForm(emptyForm);
@@ -194,17 +249,21 @@ export default function Contacts() {
 
   function openEdit(item) {
     const personId = getContactPersonId(item);
-    const foundPerson = persons.find((p) => String(p.id) === String(personId));
+    const foundPerson = persons.find((person) => String(person.id) === String(personId));
 
     setForm({
       id: getContactId(item),
       person_id: personId,
-      type: getContactType(item) === "—" ? "Téléphone" : getContactType(item),
+      type: normalizeContactType(getContactType(item)),
       value: getContactValue(item) === "—" ? "" : getContactValue(item),
       is_primary: isPrimary(item),
     });
 
-    setPersonSearch(foundPerson ? personLabel(foundPerson) : getPersonName(item, persons));
+    setPersonSearch(
+      foundPerson
+        ? personLabel(foundPerson, lang)
+        : getPersonName(item, persons, lang)
+    );
     setError("");
     setModal("edit");
   }
@@ -214,13 +273,42 @@ export default function Contacts() {
       setSaving(true);
       setError("");
 
-      if (!form.person_id) return setError("Veuillez sélectionner la personne concernée.");
-      if (!form.type) return setError("Veuillez choisir le type de contact.");
-      if (!form.value) return setError("La valeur du contact est obligatoire.");
+      if (!form.person_id) {
+        setError(
+          label(
+            lang,
+            "Veuillez sélectionner la personne concernée.",
+            "Please select the concerned person."
+          )
+        );
+        return;
+      }
+
+      if (!form.type) {
+        setError(
+          label(
+            lang,
+            "Veuillez choisir le type de contact.",
+            "Please choose the contact type."
+          )
+        );
+        return;
+      }
+
+      if (!form.value) {
+        setError(
+          label(
+            lang,
+            "La valeur du contact est obligatoire.",
+            "The contact value is required."
+          )
+        );
+        return;
+      }
 
       const payload = {
         person_id: form.person_id,
-        type: form.type,
+        type: displayContactType(form.type, "fr"),
         value: form.value,
         is_primary: form.is_primary,
       };
@@ -235,11 +323,15 @@ export default function Contacts() {
       setForm(emptyForm);
       setPersonSearch("");
       await loadContacts();
-    } catch (e) {
+    } catch (error) {
       setError(
-        e?.status === 404
-          ? "Module contacts en attente du backend."
-          : e?.message || "Erreur lors de l’enregistrement."
+        error?.status === 404
+          ? label(
+              lang,
+              "Module contacts en attente du backend.",
+              "Contacts module is waiting for the backend."
+            )
+          : error?.message || t("contacts.saveError")
       );
     } finally {
       setSaving(false);
@@ -249,24 +341,32 @@ export default function Contacts() {
   async function removeContact(item) {
     try {
       const id = getContactId(item);
-      if (!id) return setError("Contact introuvable.");
 
-      if (!window.confirm("Supprimer ce contact ?")) return;
+      if (!id) {
+        setError(label(lang, "Contact introuvable.", "Contact not found."));
+        return;
+      }
+
+      if (!window.confirm(t("contacts.deleteConfirm"))) return;
 
       await contactsApi.remove(id);
       await loadContacts();
-    } catch (e) {
+    } catch (error) {
       setError(
-        e?.status === 404
-          ? "Module contacts en attente du backend."
-          : e?.message || "Erreur lors de la suppression."
+        error?.status === 404
+          ? label(
+              lang,
+              "Module contacts en attente du backend.",
+              "Contacts module is waiting for the backend."
+            )
+          : error?.message || t("contacts.deleteError")
       );
     }
   }
 
   return (
     <>
-      <Topbar title="Contacts" />
+      <Topbar title={t("contacts.title")} />
 
       <div className="documents-page">
         <div className="documents-stats">
@@ -276,7 +376,7 @@ export default function Contacts() {
             </div>
 
             <div>
-              <h3>Total contacts</h3>
+              <h3>{t("contacts.total")}</h3>
               <p>{loading ? "…" : ready ? number(filteredContacts.length) : "—"}</p>
             </div>
           </div>
@@ -285,17 +385,23 @@ export default function Contacts() {
         <div className="documents-table-box">
           <div className="documents-table-header">
             <div>
-              <h3>Contacts</h3>
-              <span>Téléphone, email et autres contacts liés aux personnes</span>
+              <h3>{t("contacts.list")}</h3>
+              <span>
+                {label(
+                  lang,
+                  "Téléphone, email et autres contacts liés aux personnes",
+                  "Phone, email and other contacts linked to persons"
+                )}
+              </span>
             </div>
 
             <div className="documents-header-actions">
-              <button className="document-add-btn" onClick={loadContacts}>
-                <FaSyncAlt /> Actualiser
+              <button type="button" className="document-add-btn" onClick={loadContacts}>
+                <FaSyncAlt /> {t("common.refresh")}
               </button>
 
-              <button className="document-add-btn" onClick={openCreate}>
-                <FaPlus /> Ajouter
+              <button type="button" className="document-add-btn" onClick={openCreate}>
+                <FaPlus /> {t("common.add")}
               </button>
             </div>
           </div>
@@ -306,8 +412,8 @@ export default function Contacts() {
 
               <input
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Rechercher personne, type ou valeur..."
+                onChange={(event) => setQ(event.target.value)}
+                placeholder={t("contacts.searchPlaceholder")}
               />
             </div>
           </div>
@@ -318,30 +424,36 @@ export default function Contacts() {
             <table className="documents-table">
               <thead>
                 <tr>
-                  <th>Personne</th>
-                  <th>Type</th>
-                  <th>Valeur</th>
-                  <th>Principal</th>
-                  <th>Actions</th>
+                  <th>{t("contacts.person")}</th>
+                  <th>{t("contacts.type")}</th>
+                  <th>{t("contacts.value")}</th>
+                  <th>{label(lang, "Principal", "Primary")}</th>
+                  <th>{t("common.actions")}</th>
                 </tr>
               </thead>
 
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan="5" className="documents-empty">Chargement...</td>
+                    <td colSpan="5" className="documents-empty">
+                      {t("common.loading")}
+                    </td>
                   </tr>
                 )}
 
                 {!loading && !ready && (
                   <tr>
-                    <td colSpan="5" className="documents-empty">—</td>
+                    <td colSpan="5" className="documents-empty">
+                      —
+                    </td>
                   </tr>
                 )}
 
                 {!loading && ready && filteredContacts.length === 0 && (
                   <tr>
-                    <td colSpan="5" className="documents-empty">—</td>
+                    <td colSpan="5" className="documents-empty">
+                      {t("contacts.notFound")}
+                    </td>
                   </tr>
                 )}
 
@@ -349,34 +461,42 @@ export default function Contacts() {
                   ready &&
                   filteredContacts.map((item, index) => (
                     <tr key={getContactId(item) || index}>
-                      <td>{getPersonName(item, persons)}</td>
+                      <td>{getPersonName(item, persons, lang)}</td>
 
                       <td>
-                        <span className="document-type">{getContactType(item)}</span>
+                        <span className="document-type">
+                          {displayContactType(getContactType(item), lang)}
+                        </span>
                       </td>
 
                       <td>{getContactValue(item)}</td>
 
                       <td>
-                        <span className={isPrimary(item) ? "document-valid" : "document-unknown"}>
-                          {isPrimary(item) ? "Oui" : "—"}
+                        <span
+                          className={
+                            isPrimary(item) ? "document-valid" : "document-unknown"
+                          }
+                        >
+                          {isPrimary(item) ? t("common.yes") : "—"}
                         </span>
                       </td>
 
                       <td>
                         <div className="document-action-buttons">
                           <button
+                            type="button"
                             className="document-icon-action"
                             onClick={() => openEdit(item)}
-                            title="Modifier"
+                            title={t("common.edit")}
                           >
                             <FaEdit />
                           </button>
 
                           <button
+                            type="button"
                             className="document-icon-action document-delete-btn"
                             onClick={() => removeContact(item)}
-                            title="Supprimer"
+                            title={t("common.delete")}
                           >
                             <FaTrash />
                           </button>
@@ -389,7 +509,12 @@ export default function Contacts() {
           </div>
 
           <div className="documents-pagination">
-            <span>Affichage de {ready ? filteredContacts.length : "—"} contact(s)</span>
+            <span>
+              {tr("contacts.display", {
+                shown: ready ? filteredContacts.length : "—",
+                total: ready ? filteredContacts.length : "—",
+              })}
+            </span>
           </div>
         </div>
       </div>
@@ -397,17 +522,21 @@ export default function Contacts() {
       {modal && (
         <div className="documents-modal-overlay">
           <div className="documents-modal-box">
-            <button className="documents-modal-close" onClick={() => setModal(null)}>
+            <button
+              type="button"
+              className="documents-modal-close"
+              onClick={() => setModal(null)}
+            >
               <FaTimes />
             </button>
 
-            <h3>{modal === "create" ? "Ajouter un contact" : "Modifier contact"}</h3>
+            <h3>{modal === "create" ? t("contacts.add") : t("contacts.edit")}</h3>
 
             {error && <div className="documents-error">{error}</div>}
 
             <div className="documents-form-grid">
               <PersonPicker
-                label="Personne concernée"
+                label={label(lang, "Personne concernée", "Concerned person")}
                 value={personSearch}
                 onChange={(value) => {
                   setPersonSearch(value);
@@ -417,61 +546,73 @@ export default function Contacts() {
                 selectedId={form.person_id}
                 onSelect={(person) => {
                   setForm({ ...form, person_id: person.id });
-                  setPersonSearch(personLabel(person));
+                  setPersonSearch(personLabel(person, lang));
                 }}
+                lang={lang}
               />
 
               <div className="document-field">
-                <label>Type de contact</label>
+                <label>{t("contacts.type")}</label>
                 <select
                   value={form.type}
-                  onChange={(e) => setForm({ ...form, type: e.target.value })}
+                  onChange={(event) =>
+                    setForm({ ...form, type: event.target.value })
+                  }
                 >
-                  <option value="Téléphone">Téléphone</option>
-                  <option value="Email">Email</option>
-                  <option value="WhatsApp">WhatsApp</option>
-                  <option value="Autre">Autre</option>
+                  {contactTypes.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div className="document-field">
-                <label>Valeur</label>
+                <label>{t("contacts.value")}</label>
                 <input
                   value={form.value}
-                  onChange={(e) => setForm({ ...form, value: e.target.value })}
-                  placeholder="Téléphone, email ou autre contact"
+                  onChange={(event) =>
+                    setForm({ ...form, value: event.target.value })
+                  }
+                  placeholder={label(
+                    lang,
+                    "Téléphone, email ou autre contact",
+                    "Phone, email or other contact"
+                  )}
                 />
               </div>
 
               <div className="document-field">
-                <label>Contact principal</label>
+                <label>{label(lang, "Contact principal", "Primary contact")}</label>
                 <select
                   value={String(form.is_primary)}
-                  onChange={(e) =>
-                    setForm({ ...form, is_primary: e.target.value === "true" })
+                  onChange={(event) =>
+                    setForm({ ...form, is_primary: event.target.value === "true" })
                   }
                 >
-                  <option value="false">Non</option>
-                  <option value="true">Oui</option>
+                  <option value="false">{t("common.no")}</option>
+                  <option value="true">{t("common.yes")}</option>
                 </select>
               </div>
             </div>
 
             <div className="documents-modal-actions">
               <button
+                type="button"
                 className="documents-cancel-btn"
                 onClick={() => setModal(null)}
                 disabled={saving}
               >
-                Annuler
+                {t("common.cancel")}
               </button>
 
               <button
+                type="button"
                 className="documents-save-btn"
                 onClick={save}
                 disabled={saving}
               >
-                <FaSave /> {saving ? "Enregistrement..." : "Enregistrer"}
+                <FaSave /> {saving ? t("common.loading") : t("common.save")}
               </button>
             </div>
           </div>
@@ -481,21 +622,23 @@ export default function Contacts() {
   );
 }
 
-function PersonPicker({ label, value, onChange, persons, selectedId, onSelect }) {
+function PersonPicker({ label, value, onChange, persons, selectedId, onSelect, lang }) {
   return (
     <div className="document-picker">
       <label>{label}</label>
 
       <input
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Rechercher par nom ou CIN"
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={label === "Concerned person" ? "Search by name or ID" : "Rechercher par nom ou CIN"}
       />
 
       {value && !selectedId && (
         <div className="document-picker-list">
           {persons.length === 0 && (
-            <div className="document-picker-empty">Aucune personne trouvée</div>
+            <div className="document-picker-empty">
+              {t("relationships.noPerson")}
+            </div>
           )}
 
           {persons.slice(0, 10).map((person) => (
@@ -505,7 +648,7 @@ function PersonPicker({ label, value, onChange, persons, selectedId, onSelect })
               className="document-picker-item"
               onClick={() => onSelect(person)}
             >
-              <strong>{personLabel(person)}</strong>
+              <strong>{personLabel(person, lang)}</strong>
             </button>
           ))}
         </div>

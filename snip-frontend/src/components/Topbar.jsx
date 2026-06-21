@@ -3,46 +3,21 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { authApi } from "../services/api";
 import { FaBell, FaThLarge, FaMoon, FaSun } from "react-icons/fa";
 import { useState, useRef, useEffect } from "react";
+import { t, useLang, setLang } from "../i18n";
 
-const titleLabels = {
-  FR: {
-    "/": "Tableau de bord",
-    "/persons": "Gestion des personnes",
-    "/relationships": "Gestion des relations",
-    "/search": "Recherche avancée",
-    "/documents": "Gestion des documents d’identité",
-    "/files": "Gestion des fichiers",
-    "/events": "Gestion des évènements",
-    "/addresses": "Gestion des adresses",
-    "/contacts": "Gestion des contacts",
-    "/users": "Utilisateurs & rôles",
-    "/audit-logs": "Audit logs",
-    "/settings": "Paramètres",
-    notifications: "Notifications",
-    noNotifications: "Aucune notification",
-    settings: "Paramètres",
-    logout: "Déconnexion",
-    adminUser: "Admin User",
-  },
-  EN: {
-    "/": "Dashboard",
-    "/persons": "Persons management",
-    "/relationships": "Relationships management",
-    "/search": "Advanced search",
-    "/documents": "Identity documents management",
-    "/files": "Files management",
-    "/events": "Events management",
-    "/addresses": "Addresses management",
-    "/contacts": "Contacts management",
-    "/users": "Users & roles",
-    "/audit-logs": "Audit logs",
-    "/settings": "Settings",
-    notifications: "Notifications",
-    noNotifications: "No notification",
-    settings: "Settings",
-    logout: "Logout",
-    adminUser: "Admin User",
-  },
+const pageTitleKeys = {
+  "/": "dashboard.title",
+  "/persons": "persons.title",
+  "/relationships": "relationships.title",
+  "/search": "search.title",
+  "/documents": "documents.title",
+  "/files": "files.title",
+  "/events": "events.title",
+  "/addresses": "addresses.title",
+  "/contacts": "contacts.title",
+  "/users": "users.title",
+  "/audit-logs": "audit.title",
+  "/settings": "settings.title",
 };
 
 function applyTheme(isDark) {
@@ -60,14 +35,12 @@ function applyTheme(isDark) {
 export default function Topbar({ title }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const lang = useLang();
 
   const [openMenu, setOpenMenu] = useState(false);
   const [openNotif, setOpenNotif] = useState(false);
   const [darkMode, setDarkMode] = useState(
     () => localStorage.getItem("snip_dark_mode") === "true"
-  );
-  const [language, setLanguage] = useState(
-    () => localStorage.getItem("snip_language") || "FR"
   );
   const [notifications, setNotifications] = useState([
     "Nouvel utilisateur ajouté",
@@ -81,11 +54,6 @@ export default function Topbar({ title }) {
   useEffect(() => {
     applyTheme(darkMode);
   }, [darkMode]);
-
-  useEffect(() => {
-    localStorage.setItem("snip_language", language);
-    window.dispatchEvent(new Event("snip-language-change"));
-  }, [language]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -114,7 +82,7 @@ export default function Topbar({ title }) {
   };
 
   const toggleLanguage = () => {
-    setLanguage((current) => (current === "FR" ? "EN" : "FR"));
+    setLang(lang === "fr" ? "en" : "fr");
   };
 
   const toggleDarkMode = () => {
@@ -126,8 +94,8 @@ export default function Topbar({ title }) {
     navigate("/login", { replace: true });
   };
 
-  const t = titleLabels[language] || titleLabels.FR;
-  const currentTitle = t[location.pathname] || title || "SNIP";
+  const titleKey = pageTitleKeys[location.pathname];
+  const currentTitle = titleKey ? t(titleKey) : title || t("app.name");
 
   return (
     <div className="topbar">
@@ -141,9 +109,9 @@ export default function Topbar({ title }) {
           type="button"
           className="topbar-btn"
           onClick={toggleLanguage}
-          title="Changer la langue"
+          title={t("settings.language")}
         >
-          {language === "FR" ? "EN" : "FR"}
+          {lang === "fr" ? "EN" : "FR"}
         </button>
 
         <button
@@ -160,7 +128,7 @@ export default function Topbar({ title }) {
             type="button"
             className="notification-box"
             onClick={handleNotification}
-            title={t.notifications}
+            title={t("settings.notifications")}
           >
             <FaBell className="bell-icon" />
 
@@ -173,8 +141,8 @@ export default function Topbar({ title }) {
 
           {openNotif && (
             <div className="notification-dropdown">
-              <h4>{t.notifications}</h4>
-              <p className="empty-notif">{t.noNotifications}</p>
+              <h4>{t("settings.notifications")}</h4>
+              <p className="empty-notif">{t("common.noData")}</p>
             </div>
           )}
         </div>
@@ -185,18 +153,18 @@ export default function Topbar({ title }) {
             className="avatar-placeholder"
             onClick={() => setOpenMenu((current) => !current)}
           >
-            {(t.adminUser || "Admin").charAt(0).toUpperCase()}
+            A
           </button>
 
           {openMenu && (
             <div className="dropdown-menu">
-              <h4>{t.adminUser}</h4>
+              <h4>Admin User</h4>
               <p>ADMIN</p>
 
               <hr />
 
               <Link to="/settings" className="dropdown-link">
-                {t.settings}
+                {t("settings.title")}
               </Link>
 
               <button
@@ -204,7 +172,7 @@ export default function Topbar({ title }) {
                 className="dropdown-link"
                 onClick={handleLogout}
               >
-                {t.logout}
+                {t("menu.logout")}
               </button>
             </div>
           )}

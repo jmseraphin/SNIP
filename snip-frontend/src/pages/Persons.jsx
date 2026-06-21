@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Topbar from "../components/Topbar";
 import { personsApi } from "../services/api";
 import { fmtDate, fullName, nationalId, phone, number } from "../utils/format";
+import { t, useLang } from "../i18n";
 import {
   FaSearch,
   FaPlus,
@@ -28,7 +29,48 @@ const emptyForm = {
   status: "active",
 };
 
+function replaceValue(text, values = {}) {
+  return Object.entries(values).reduce(
+    (result, [key, value]) => result.replace(`{{${key}}}`, value),
+    text
+  );
+}
+
+function translateStatus(status) {
+  const value = status || "active";
+
+  if (value === "active") return t("persons.active");
+  if (value === "inactive") return t("persons.inactive");
+
+  return value;
+}
+
+function translateGender(value) {
+  if (!value) return t("common.none");
+
+  const gender = String(value).toLowerCase();
+
+  if (gender === "m" || gender === "masculin" || gender === "male") {
+    return t("persons.male");
+  }
+
+  if (gender === "f" || gender === "féminin" || gender === "feminin" || gender === "female") {
+    return t("persons.female");
+  }
+
+  if (gender === "homme" || gender === "man") {
+    return t("persons.man");
+  }
+
+  if (gender === "femme" || gender === "woman") {
+    return t("persons.woman");
+  }
+
+  return value;
+}
+
 export default function Persons() {
+  const lang = useLang();
   const navigate = useNavigate();
 
   const [persons, setPersons] = useState([]);
@@ -94,7 +136,7 @@ export default function Persons() {
 
       return matchKeyword && matchGender;
     });
-  }, [persons, query, gender]);
+  }, [persons, query, gender, lang]);
 
   const openCreate = () => {
     setForm(emptyForm);
@@ -118,7 +160,7 @@ export default function Persons() {
       setError("");
 
       if (!form.last_name || !form.first_name) {
-        setError("Nom et prénom obligatoires.");
+        setError(t("persons.requiredName"));
         return;
       }
 
@@ -131,24 +173,28 @@ export default function Persons() {
       setModal(null);
       await load();
     } catch (e) {
-      setError(e.message || "Erreur lors de l'enregistrement.");
+      setError(e.message || t("persons.saveError"));
     }
   };
 
   const remove = async (p) => {
-    if (!window.confirm(`Supprimer ${fullName(p)} ?`)) return;
+    const message = replaceValue(t("persons.deleteConfirm"), {
+      name: fullName(p),
+    });
+
+    if (!window.confirm(message)) return;
 
     try {
       await personsApi.remove(p.id);
       await load();
     } catch (e) {
-      alert(e.message || "Suppression impossible.");
+      alert(e.message || t("persons.deleteError"));
     }
   };
 
   return (
     <>
-      <Topbar title="Gestion des personnes" />
+      <Topbar title={t("persons.title")} />
 
       <div className="persons-page">
         <div className="persons-stats">
@@ -156,8 +202,9 @@ export default function Persons() {
             <div className="stats-icon">
               <FaUsers />
             </div>
+
             <div>
-              <h3>Total personnes</h3>
+              <h3>{t("persons.total")}</h3>
               <p>{loading ? "…" : number(total)}</p>
             </div>
           </div>
@@ -166,31 +213,32 @@ export default function Persons() {
         <div className="table-box pro-table-box">
           <div className="table-header">
             <div>
-              <h3>Liste des personnes</h3>
-              <span>Consultation, ajout, modification et suppression</span>
+              <h3>{t("persons.list")}</h3>
+              <span>{t("persons.subtitle")}</span>
             </div>
 
-            <button className="add-btn" onClick={openCreate}>
-              <FaPlus /> Ajouter
+            <button type="button" className="add-btn" onClick={openCreate}>
+              <FaPlus /> {t("common.add")}
             </button>
           </div>
 
           <div className="filters-bar">
             <div className="search-box">
               <FaSearch className="search-icon" />
+
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Rechercher nom, CIN, téléphone..."
+                placeholder={t("persons.searchPlaceholder")}
               />
             </div>
 
             <select value={gender} onChange={(e) => setGender(e.target.value)}>
-              <option value="">Tous les sexes</option>
-              <option value="M">Masculin</option>
-              <option value="F">Féminin</option>
-              <option value="Homme">Homme</option>
-              <option value="Femme">Femme</option>
+              <option value="">{t("persons.allGenders")}</option>
+              <option value="M">{t("persons.male")}</option>
+              <option value="F">{t("persons.female")}</option>
+              <option value="Homme">{t("persons.man")}</option>
+              <option value="Femme">{t("persons.woman")}</option>
             </select>
           </div>
 
@@ -198,13 +246,13 @@ export default function Persons() {
             <table className="persons-table">
               <thead>
                 <tr>
-                  <th>Personne</th>
-                  <th>CIN</th>
-                  <th>Téléphone</th>
-                  <th>Sexe</th>
-                  <th>Naissance</th>
-                  <th>Statut</th>
-                  <th className="actions-col">Actions</th>
+                  <th>{t("persons.person")}</th>
+                  <th>{t("persons.cin")}</th>
+                  <th>{t("persons.phone")}</th>
+                  <th>{t("persons.gender")}</th>
+                  <th>{t("persons.birth")}</th>
+                  <th>{t("persons.status")}</th>
+                  <th className="actions-col">{t("common.actions")}</th>
                 </tr>
               </thead>
 
@@ -212,7 +260,7 @@ export default function Persons() {
                 {loading && (
                   <tr>
                     <td colSpan="7" className="empty-row">
-                      Chargement des données...
+                      {t("persons.loadingData")}
                     </td>
                   </tr>
                 )}
@@ -220,7 +268,7 @@ export default function Persons() {
                 {!loading && filteredPersons.length === 0 && (
                   <tr>
                     <td colSpan="7" className="empty-row">
-                      Aucune personne trouvée
+                      {t("persons.notFound")}
                     </td>
                   </tr>
                 )}
@@ -233,6 +281,7 @@ export default function Persons() {
                           <div className="person-avatar">
                             {fullName(p).charAt(0).toUpperCase()}
                           </div>
+
                           <div>
                             <h4>{fullName(p)}</h4>
                             <span>ID : {String(p.id).slice(0, 8)}...</span>
@@ -254,7 +303,7 @@ export default function Persons() {
 
                       <td>
                         <span className="mini-info">
-                          <FaVenusMars /> {p.gender || p.sexe || "—"}
+                          <FaVenusMars /> {translateGender(p.gender || p.sexe)}
                         </span>
                       </td>
 
@@ -268,31 +317,34 @@ export default function Persons() {
                               : "status inactive"
                           }
                         >
-                          {p.status || "active"}
+                          {translateStatus(p.status)}
                         </span>
                       </td>
 
                       <td>
                         <div className="action-buttons">
                           <button
+                            type="button"
                             className="icon-action view-btn"
-                            data-tooltip="Voir"
+                            data-tooltip={t("persons.view")}
                             onClick={() => navigate(`/persons/${p.id}`)}
                           >
                             <FaEye />
                           </button>
 
                           <button
+                            type="button"
                             className="icon-action edit-btn"
-                            data-tooltip="Modifier"
+                            data-tooltip={t("common.edit")}
                             onClick={() => openEdit(p)}
                           >
                             <FaEdit />
                           </button>
 
                           <button
+                            type="button"
                             className="icon-action delete-btn"
-                            data-tooltip="Supprimer"
+                            data-tooltip={t("common.delete")}
                             onClick={() => remove(p)}
                           >
                             <FaTrash />
@@ -307,7 +359,10 @@ export default function Persons() {
 
           <div className="pagination">
             <span>
-              Affichage de {filteredPersons.length} sur {number(total)} personnes
+              {replaceValue(t("persons.display"), {
+                shown: filteredPersons.length,
+                total: number(total),
+              })}
             </span>
           </div>
         </div>
@@ -316,17 +371,13 @@ export default function Persons() {
       {modal && (
         <div className="modal-overlay">
           <div className="modal-box wide pro-modal">
-            <h3>
-              {modal === "create"
-                ? "Ajouter une personne"
-                : "Modifier une personne"}
-            </h3>
+            <h3>{modal === "create" ? t("persons.add") : t("persons.edit")}</h3>
 
             {error && <div className="login-error">{error}</div>}
 
             <div className="form-grid">
               <input
-                placeholder="Nom de famille"
+                placeholder={t("persons.lastName")}
                 value={form.last_name || ""}
                 onChange={(e) =>
                   setForm({ ...form, last_name: e.target.value })
@@ -334,7 +385,7 @@ export default function Persons() {
               />
 
               <input
-                placeholder="Prénom"
+                placeholder={t("persons.firstName")}
                 value={form.first_name || ""}
                 onChange={(e) =>
                   setForm({ ...form, first_name: e.target.value })
@@ -342,13 +393,13 @@ export default function Persons() {
               />
 
               <input
-                placeholder="CIN / Identifiant national"
+                placeholder={t("persons.nationalId")}
                 value={form.cin || ""}
                 onChange={(e) => setForm({ ...form, cin: e.target.value })}
               />
 
               <input
-                placeholder="Téléphone"
+                placeholder={t("persons.phone")}
                 value={form.phone || ""}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
               />
@@ -365,13 +416,13 @@ export default function Persons() {
                 value={form.gender || ""}
                 onChange={(e) => setForm({ ...form, gender: e.target.value })}
               >
-                <option value="">Sexe</option>
-                <option value="M">Masculin</option>
-                <option value="F">Féminin</option>
+                <option value="">{t("persons.gender")}</option>
+                <option value="M">{t("persons.male")}</option>
+                <option value="F">{t("persons.female")}</option>
               </select>
 
               <input
-                placeholder="Lieu de naissance"
+                placeholder={t("persons.birthPlace")}
                 value={form.birth_place || ""}
                 onChange={(e) =>
                   setForm({ ...form, birth_place: e.target.value })
@@ -379,7 +430,7 @@ export default function Persons() {
               />
 
               <input
-                placeholder="Nationalité"
+                placeholder={t("persons.nationality")}
                 value={form.nationality || ""}
                 onChange={(e) =>
                   setForm({ ...form, nationality: e.target.value })
@@ -388,11 +439,16 @@ export default function Persons() {
             </div>
 
             <div className="modal-actions">
-              <button className="cancel-btn" onClick={() => setModal(null)}>
-                Annuler
+              <button
+                type="button"
+                className="cancel-btn"
+                onClick={() => setModal(null)}
+              >
+                {t("common.cancel")}
               </button>
-              <button className="save-btn" onClick={save}>
-                Enregistrer
+
+              <button type="button" className="save-btn" onClick={save}>
+                {t("common.save")}
               </button>
             </div>
           </div>

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Topbar from "../components/Topbar";
 import { personsApi, addressesApi } from "../services/api";
 import { fmtDate, number, fullName, nationalId } from "../utils/format";
+import { t, tr, useLang } from "../i18n";
 import {
   FaMapMarkerAlt,
   FaSearch,
@@ -24,14 +25,55 @@ const emptyForm = {
   end_date: "",
 };
 
-const addressTypes = [
-  "Domicile",
-  "Travail",
-  "Actuelle",
-  "Ancienne",
-  "Temporaire",
-  "Autre",
+const addressTypeValues = [
+  "home",
+  "work",
+  "current",
+  "old",
+  "temporary",
+  "other",
 ];
+
+const addressTypeLabels = {
+  fr: {
+    home: "Domicile",
+    work: "Travail",
+    current: "Actuelle",
+    old: "Ancienne",
+    temporary: "Temporaire",
+    other: "Autre",
+  },
+  en: {
+    home: "Home",
+    work: "Work",
+    current: "Current",
+    old: "Old",
+    temporary: "Temporary",
+    other: "Other",
+  },
+};
+
+function label(lang, fr, en) {
+  return lang === "en" ? en : fr;
+}
+
+function normalizeAddressType(value) {
+  const current = String(value || "").toLowerCase();
+
+  if (current === "domicile" || current === "home") return "home";
+  if (current === "travail" || current === "work") return "work";
+  if (current === "actuelle" || current === "current") return "current";
+  if (current === "ancienne" || current === "old") return "old";
+  if (current === "temporaire" || current === "temporary") return "temporary";
+  if (current === "autre" || current === "other") return "other";
+
+  return value || "";
+}
+
+function displayAddressType(value, lang) {
+  const key = normalizeAddressType(value);
+  return addressTypeLabels[lang]?.[key] || addressTypeLabels.fr[key] || value || "—";
+}
 
 function normalizeList(res, keys = []) {
   if (Array.isArray(res)) return res;
@@ -49,7 +91,7 @@ function normalizeList(res, keys = []) {
   return [];
 }
 
-function personLabel(person) {
+function personLabel(person, lang) {
   if (!person) return "—";
 
   const name =
@@ -60,7 +102,7 @@ function personLabel(person) {
     `${person.last_name || person.nom || ""} ${
       person.first_name || person.prenom || ""
     }`.trim() ||
-    "Personne sans nom";
+    label(lang, "Personne sans nom", "Unnamed person");
 
   const cin =
     nationalId(person) ||
@@ -72,7 +114,7 @@ function personLabel(person) {
   return cin ? `${name} — ${cin}` : name;
 }
 
-function normalizeAddress(item) {
+function normalizeAddress(item, lang) {
   return {
     id: item.id,
     person_id: item.person_id || item.personId || item.person?.id || "",
@@ -82,7 +124,7 @@ function normalizeAddress(item) {
       item.person?.full_name ||
       item.person?.fullName ||
       item.person?.name ||
-      personLabel(item.person),
+      personLabel(item.person, lang),
     type: item.type || item.address_type || item.addressType || "",
     address: item.address || item.full_address || item.fullAddress || "",
     city: item.city || "",
@@ -94,6 +136,8 @@ function normalizeAddress(item) {
 }
 
 export default function Addresses() {
+  const lang = useLang();
+
   const [persons, setPersons] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [q, setQ] = useState("");
@@ -106,12 +150,21 @@ export default function Addresses() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const addressTypes = useMemo(
+    () =>
+      addressTypeValues.map((value) => ({
+        value,
+        label: addressTypeLabels[lang]?.[value] || addressTypeLabels.fr[value],
+      })),
+    [lang]
+  );
+
   const findPerson = (id) =>
     persons.find((person) => String(person.id) === String(id));
 
   const displayPerson = (id, fallback = "") => {
     const found = findPerson(id);
-    if (found) return personLabel(found);
+    if (found) return personLabel(found, lang);
     return fallback || "—";
   };
 
@@ -140,9 +193,9 @@ export default function Addresses() {
       });
 
       const data = normalizeList(response, ["addresses"]);
-      setAddresses(data.map(normalizeAddress));
+      setAddresses(data.map((item) => normalizeAddress(item, lang)));
       setBackendReady(true);
-    } catch (e) {
+    } catch {
       setAddresses([]);
       setBackendReady(false);
     }
@@ -163,7 +216,6 @@ export default function Addresses() {
     load();
   }, []);
 
-
   const filteredAddresses = useMemo(() => {
     const keyword = String(q || "").toLowerCase().trim();
 
@@ -175,6 +227,7 @@ export default function Addresses() {
         item.person_name,
         displayPerson(item.person_id, item.person_name),
         item.type,
+        displayAddressType(item.type, lang),
         item.address,
         item.city,
         item.region,
@@ -188,7 +241,7 @@ export default function Addresses() {
 
       return values.includes(keyword);
     });
-  }, [addresses, q, persons]);
+  }, [addresses, q, persons, lang]);
 
   const filteredPersons = useMemo(() => {
     const keyword = String(personSearch || "").toLowerCase().trim();
@@ -211,14 +264,14 @@ export default function Addresses() {
         person.phone,
         person.telephone,
         person.email,
-        personLabel(person),
+        personLabel(person, lang),
       ]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
         .includes(keyword)
     );
-  }, [persons, personSearch]);
+  }, [persons, personSearch, lang]);
 
   const openCreate = () => {
     setForm(emptyForm);
@@ -231,7 +284,7 @@ export default function Addresses() {
   const openEdit = (item) => {
     setForm({
       person_id: item.person_id || "",
-      type: item.type || "",
+      type: normalizeAddressType(item.type),
       address: item.address || "",
       city: item.city || "",
       region: item.region || "",
@@ -251,28 +304,52 @@ export default function Addresses() {
       setError("");
 
       if (!backendReady) {
-        setError("Le backend Adresses n’est pas encore disponible.");
+        setError(
+          label(
+            lang,
+            "Le backend Adresses n’est pas encore disponible.",
+            "The Addresses backend is not available yet."
+          )
+        );
         return;
       }
 
       if (!form.person_id) {
-        setError("Veuillez sélectionner la personne concernée.");
+        setError(
+          label(
+            lang,
+            "Veuillez sélectionner la personne concernée.",
+            "Please select the concerned person."
+          )
+        );
         return;
       }
 
       if (!form.type) {
-        setError("Veuillez choisir le type d’adresse.");
+        setError(
+          label(
+            lang,
+            "Veuillez choisir le type d’adresse.",
+            "Please choose the address type."
+          )
+        );
         return;
       }
 
       if (!form.address) {
-        setError("L’adresse complète est obligatoire.");
+        setError(
+          label(
+            lang,
+            "L’adresse complète est obligatoire.",
+            "The full address is required."
+          )
+        );
         return;
       }
 
       const payload = {
         person_id: form.person_id,
-        type: form.type,
+        type: displayAddressType(form.type, "fr"),
         address: form.address,
         city: form.city || null,
         region: form.region || null,
@@ -291,27 +368,27 @@ export default function Addresses() {
       setForm(emptyForm);
       setPersonSearch("");
       await load();
-    } catch (e) {
-      setError(e.message || "Erreur lors de l’enregistrement.");
+    } catch (error) {
+      setError(error.message || t("addresses.saveError"));
     } finally {
       setSaving(false);
     }
   };
 
   const remove = async (item) => {
-    if (!window.confirm("Supprimer cette adresse ?")) return;
+    if (!window.confirm(t("addresses.deleteConfirm"))) return;
 
     try {
       await addressesApi.remove(item.id);
       await load();
-    } catch (e) {
-      alert(e.message || "Suppression impossible.");
+    } catch (error) {
+      alert(error.message || t("addresses.deleteError"));
     }
   };
 
   return (
     <>
-      <Topbar title="Gestion des adresses" />
+      <Topbar title={t("addresses.title")} />
 
       <div className="addresses-page">
         <div className="addresses-stats">
@@ -321,9 +398,13 @@ export default function Addresses() {
             </div>
 
             <div>
-              <h3>Total adresses</h3>
+              <h3>{t("addresses.total")}</h3>
               <p>
-                {loading ? "…" : backendReady ? number(filteredAddresses.length) : "—"}
+                {loading
+                  ? "…"
+                  : backendReady
+                  ? number(filteredAddresses.length)
+                  : "—"}
               </p>
             </div>
           </div>
@@ -332,12 +413,18 @@ export default function Addresses() {
         <div className="addresses-table-box">
           <div className="addresses-table-header">
             <div>
-              <h3>Adresses</h3>
-              <span>Adresses rattachées aux personnes selon le modèle UML</span>
+              <h3>{t("addresses.list")}</h3>
+              <span>
+                {label(
+                  lang,
+                  "Adresses rattachées aux personnes selon le modèle UML",
+                  "Addresses linked to persons according to the UML model"
+                )}
+              </span>
             </div>
 
-            <button className="address-add-btn" onClick={openCreate}>
-              <FaPlus /> Ajouter
+            <button type="button" className="address-add-btn" onClick={openCreate}>
+              <FaPlus /> {t("common.add")}
             </button>
           </div>
 
@@ -347,8 +434,8 @@ export default function Addresses() {
 
               <input
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Rechercher personne, adresse, ville, région..."
+                onChange={(event) => setQ(event.target.value)}
+                placeholder={t("addresses.searchPlaceholder")}
               />
             </div>
           </div>
@@ -359,15 +446,15 @@ export default function Addresses() {
             <table className="addresses-table">
               <thead>
                 <tr>
-                  <th>Personne</th>
-                  <th>Type</th>
-                  <th>Adresse</th>
-                  <th>Ville</th>
-                  <th>Région</th>
-                  <th>Pays</th>
-                  <th>Date début</th>
-                  <th>Date fin</th>
-                  <th>Actions</th>
+                  <th>{t("addresses.person")}</th>
+                  <th>{t("addresses.type")}</th>
+                  <th>{t("addresses.address")}</th>
+                  <th>{t("addresses.city")}</th>
+                  <th>{t("addresses.region")}</th>
+                  <th>{t("addresses.country")}</th>
+                  <th>{t("relationships.startDate")}</th>
+                  <th>{t("relationships.endDate")}</th>
+                  <th>{t("common.actions")}</th>
                 </tr>
               </thead>
 
@@ -375,7 +462,7 @@ export default function Addresses() {
                 {loading && (
                   <tr>
                     <td colSpan="9" className="addresses-empty">
-                      Chargement...
+                      {t("common.loading")}
                     </td>
                   </tr>
                 )}
@@ -391,7 +478,7 @@ export default function Addresses() {
                 {!loading && backendReady && filteredAddresses.length === 0 && (
                   <tr>
                     <td colSpan="9" className="addresses-empty">
-                      Aucune adresse trouvée
+                      {t("addresses.notFound")}
                     </td>
                   </tr>
                 )}
@@ -403,7 +490,9 @@ export default function Addresses() {
                       <td>{displayPerson(item.person_id, item.person_name)}</td>
 
                       <td>
-                        <span className="address-type">{item.type || "—"}</span>
+                        <span className="address-type">
+                          {displayAddressType(item.type, lang)}
+                        </span>
                       </td>
 
                       <td className="address-text">{item.address || "—"}</td>
@@ -416,17 +505,19 @@ export default function Addresses() {
                       <td>
                         <div className="address-action-buttons">
                           <button
+                            type="button"
                             className="address-icon-action address-edit-btn"
                             onClick={() => openEdit(item)}
-                            title="Modifier"
+                            title={t("common.edit")}
                           >
                             <FaEdit />
                           </button>
 
                           <button
+                            type="button"
                             className="address-icon-action address-delete-btn"
                             onClick={() => remove(item)}
-                            title="Supprimer"
+                            title={t("common.delete")}
                           >
                             <FaTrash />
                           </button>
@@ -440,7 +531,10 @@ export default function Addresses() {
 
           <div className="addresses-pagination">
             <span>
-              Affichage de {backendReady ? filteredAddresses.length : "—"} adresse(s)
+              {tr("addresses.display", {
+                shown: backendReady ? filteredAddresses.length : "—",
+                total: backendReady ? filteredAddresses.length : "—",
+              })}
             </span>
           </div>
         </div>
@@ -450,30 +544,35 @@ export default function Addresses() {
         <div className="addresses-modal-overlay">
           <div className="addresses-modal-box">
             <button
+              type="button"
               className="addresses-modal-close"
               onClick={() => setModal(null)}
             >
               <FaTimes />
             </button>
 
-            <h3>{modal === "create" ? "Ajouter une adresse" : "Modifier adresse"}</h3>
+            <h3>{modal === "create" ? t("addresses.add") : t("addresses.edit")}</h3>
 
             {error && <div className="addresses-error">{error}</div>}
 
             <div className="addresses-form-grid">
               <div className="address-field person-autocomplete">
-                <label>Personne concernée</label>
+                <label>{label(lang, "Personne concernée", "Concerned person")}</label>
 
                 <input
                   value={personSearch}
-                  onChange={(e) => {
-                    setPersonSearch(e.target.value);
+                  onChange={(event) => {
+                    setPersonSearch(event.target.value);
                     setForm({ ...form, person_id: "" });
                   }}
                   placeholder={
                     personsLoading
-                      ? "Chargement des personnes..."
-                      : "Rechercher par nom ou CIN"
+                      ? label(
+                          lang,
+                          "Chargement des personnes...",
+                          "Loading persons..."
+                        )
+                      : t("relationships.searchPerson")
                   }
                 />
 
@@ -481,7 +580,7 @@ export default function Addresses() {
                   <div className="person-suggestions">
                     {filteredPersons.length === 0 && (
                       <div className="person-suggestion-empty">
-                        Aucune personne trouvée
+                        {t("relationships.noPerson")}
                       </div>
                     )}
 
@@ -491,10 +590,10 @@ export default function Addresses() {
                         key={person.id}
                         onClick={() => {
                           setForm({ ...form, person_id: person.id });
-                          setPersonSearch(personLabel(person));
+                          setPersonSearch(personLabel(person, lang));
                         }}
                       >
-                        {personLabel(person)}
+                        {personLabel(person, lang)}
                       </button>
                     ))}
                   </div>
@@ -502,80 +601,85 @@ export default function Addresses() {
               </div>
 
               <div className="address-field">
-                <label>Type d’adresse</label>
+                <label>{t("addresses.type")}</label>
                 <select
                   value={form.type}
-                  onChange={(e) => setForm({ ...form, type: e.target.value })}
+                  onChange={(event) =>
+                    setForm({ ...form, type: event.target.value })
+                  }
                 >
-                  <option value="">Choisir un type</option>
+                  <option value="">{t("relationships.allTypes")}</option>
+
                   {addressTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
+                    <option key={type.value} value={type.value}>
+                      {type.label}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div className="address-field address-wide">
-                <label>Adresse complète</label>
+                <label>{t("addresses.address")}</label>
                 <input
                   value={form.address}
-                  onChange={(e) =>
-                    setForm({ ...form, address: e.target.value })
+                  onChange={(event) =>
+                    setForm({ ...form, address: event.target.value })
                   }
-                  placeholder="Adresse complète"
+                  placeholder={t("addresses.address")}
                 />
               </div>
 
               <div className="address-field">
-                <label>Ville</label>
+                <label>{t("addresses.city")}</label>
                 <input
                   value={form.city}
-                  onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  placeholder="Ville"
+                  onChange={(event) =>
+                    setForm({ ...form, city: event.target.value })
+                  }
+                  placeholder={t("addresses.city")}
                 />
               </div>
 
               <div className="address-field">
-                <label>Région</label>
+                <label>{t("addresses.region")}</label>
                 <input
                   value={form.region}
-                  onChange={(e) =>
-                    setForm({ ...form, region: e.target.value })
+                  onChange={(event) =>
+                    setForm({ ...form, region: event.target.value })
                   }
-                  placeholder="Région"
+                  placeholder={t("addresses.region")}
                 />
               </div>
 
               <div className="address-field">
-                <label>Pays</label>
+                <label>{t("addresses.country")}</label>
                 <input
                   value={form.country}
-                  onChange={(e) =>
-                    setForm({ ...form, country: e.target.value })
+                  onChange={(event) =>
+                    setForm({ ...form, country: event.target.value })
                   }
-                  placeholder="Pays"
+                  placeholder={t("addresses.country")}
                 />
               </div>
 
               <div className="address-field">
-                <label>Date début</label>
+                <label>{t("relationships.startDate")}</label>
                 <input
                   type="date"
                   value={form.start_date}
-                  onChange={(e) =>
-                    setForm({ ...form, start_date: e.target.value })
+                  onChange={(event) =>
+                    setForm({ ...form, start_date: event.target.value })
                   }
                 />
               </div>
 
               <div className="address-field">
-                <label>Date fin</label>
+                <label>{t("relationships.endDate")}</label>
                 <input
                   type="date"
                   value={form.end_date}
-                  onChange={(e) =>
-                    setForm({ ...form, end_date: e.target.value })
+                  onChange={(event) =>
+                    setForm({ ...form, end_date: event.target.value })
                   }
                 />
               </div>
@@ -583,19 +687,21 @@ export default function Addresses() {
 
             <div className="addresses-modal-actions">
               <button
+                type="button"
                 className="addresses-cancel-btn"
                 onClick={() => setModal(null)}
                 disabled={saving}
               >
-                Annuler
+                {t("common.cancel")}
               </button>
 
               <button
+                type="button"
                 className="addresses-save-btn"
                 onClick={save}
                 disabled={saving}
               >
-                <FaSave /> {saving ? "Enregistrement..." : "Enregistrer"}
+                <FaSave /> {saving ? t("common.loading") : t("common.save")}
               </button>
             </div>
           </div>

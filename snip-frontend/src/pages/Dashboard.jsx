@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Topbar from "../components/Topbar";
 import { dashboardApi } from "../services/api";
 import { number } from "../utils/format";
+import { t, useLang } from "../i18n";
 import {
   FaUsers,
   FaFileAlt,
@@ -47,35 +48,39 @@ const chartColors = [
 
 const actionConfig = {
   SEARCH: {
-    label: "Recherche",
+    labelKey: "action.search",
     icon: FaSearch,
   },
   READ: {
-    label: "Consultation",
+    labelKey: "action.read",
     icon: FaEye,
   },
   CREATE: {
-    label: "Création",
+    labelKey: "action.create",
     icon: FaPlus,
   },
   UPDATE: {
-    label: "Modification",
+    labelKey: "action.update",
     icon: FaEdit,
   },
   DELETE: {
-    label: "Suppression",
+    labelKey: "action.delete",
     icon: FaTrash,
   },
 };
 
-function formatDateTime(value) {
+function translateWithValue(key, value) {
+  return t(key).replace("{{value}}", value);
+}
+
+function formatDateTime(value, lang) {
   if (!value) return "";
 
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) return "";
 
-  return date.toLocaleString("fr-FR", {
+  return date.toLocaleString(lang === "en" ? "en-US" : "fr-FR", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -84,7 +89,7 @@ function formatDateTime(value) {
   });
 }
 
-function timeAgo(value) {
+function timeAgo(value, lang) {
   if (!value) return "";
 
   const date = new Date(value);
@@ -97,63 +102,75 @@ function timeAgo(value) {
   const diffHours = Math.floor(diffMinutes / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMinutes < 1) return "À l’instant";
-  if (diffMinutes < 60) return `Il y a ${diffMinutes} min`;
-  if (diffHours < 24) return `Il y a ${diffHours} h`;
-  if (diffDays < 7) return `Il y a ${diffDays} j`;
+  if (diffMinutes < 1) return t("dashboard.now");
+  if (diffMinutes < 60) {
+    return translateWithValue("dashboard.minutesAgo", diffMinutes);
+  }
+  if (diffHours < 24) {
+    return translateWithValue("dashboard.hoursAgo", diffHours);
+  }
+  if (diffDays < 7) {
+    return translateWithValue("dashboard.daysAgo", diffDays);
+  }
 
-  return formatDateTime(value);
+  return formatDateTime(value, lang);
 }
 
 function formatTargetType(type) {
   const labels = {
-    Person: "personne",
-    IdentityDocument: "document d’identité",
-    Relationship: "relation",
-    Event: "événement",
-    File: "fichier",
-    Address: "adresse",
-    Contact: "contact",
-    User: "utilisateur",
-    Role: "rôle",
+    Person: "target.person",
+    IdentityDocument: "target.identityDocument",
+    Relationship: "target.relationship",
+    Event: "target.event",
+    File: "target.file",
+    Address: "target.address",
+    Contact: "target.contact",
+    User: "target.user",
+    Role: "target.role",
+    Système: "target.system",
+    System: "target.system",
   };
 
-  return labels[type] || type || "élément";
+  return labels[type] ? t(labels[type]) : type || t("target.item");
 }
 
-function formatActivity(activity) {
+function formatActivity(activity, lang) {
   const action = activity.action || activity.label || "ACTION";
-  const targetType = activity.target_type || activity.targetType || "Système";
+  const targetType = activity.target_type || activity.targetType || "System";
   const username =
     activity.username ||
     activity.user_name ||
     activity.user?.username ||
     activity.user?.full_name ||
-    "Utilisateur";
+    t("target.user");
 
   const config = actionConfig[action] || {
-    label: action,
+    labelKey: null,
     icon: FaHistory,
   };
+
+  const actionLabel = config.labelKey ? t(config.labelKey) : action;
 
   const description =
     activity.description ||
     activity.details?.description ||
-    `${config.label} sur ${formatTargetType(targetType)}`;
+    `${actionLabel} ${formatTargetType(targetType)}`;
 
   return {
     ...activity,
-    actionLabel: config.label,
+    actionLabel,
     Icon: config.icon,
     username,
     description,
     targetLabel: formatTargetType(targetType),
-    relativeTime: timeAgo(activity.created_at || activity.createdAt),
-    fullDate: formatDateTime(activity.created_at || activity.createdAt),
+    relativeTime: timeAgo(activity.created_at || activity.createdAt, lang),
+    fullDate: formatDateTime(activity.created_at || activity.createdAt, lang),
   };
 }
 
 export default function Dashboard() {
+  const lang = useLang();
+
   const [stats, setStats] = useState(emptyStats);
   const [loading, setLoading] = useState(true);
 
@@ -181,14 +198,42 @@ export default function Dashboard() {
   }, []);
 
   const cards = [
-    ["Personnes", stats.persons ?? stats.total_persons ?? 0, FaUsers],
-    ["Documents", stats.documents ?? stats.total_documents ?? 0, FaFileAlt],
-    ["Événements", stats.events ?? stats.total_events ?? 0, FaCalendarAlt],
-    ["Utilisateurs", stats.users ?? stats.total_users ?? 0, FaUserShield],
-    ["Relations", stats.relationships ?? stats.total_relationships ?? 0, FaLink],
-    ["Fichiers", stats.files ?? stats.total_files ?? 0, FaFolderOpen],
-    ["Contacts", stats.contacts ?? stats.total_contacts ?? 0, FaAddressBook],
-    ["Logs d’audit", stats.audit_logs ?? stats.total_audit_logs ?? 0, FaClipboardList],
+    [t("dashboard.persons"), stats.persons ?? stats.total_persons ?? 0, FaUsers],
+    [
+      t("dashboard.documents"),
+      stats.documents ?? stats.total_documents ?? 0,
+      FaFileAlt,
+    ],
+    [
+      t("dashboard.events"),
+      stats.events ?? stats.total_events ?? 0,
+      FaCalendarAlt,
+    ],
+    [
+      t("dashboard.users"),
+      stats.users ?? stats.total_users ?? 0,
+      FaUserShield,
+    ],
+    [
+      t("dashboard.relationships"),
+      stats.relationships ?? stats.total_relationships ?? 0,
+      FaLink,
+    ],
+    [
+      t("dashboard.files"),
+      stats.files ?? stats.total_files ?? 0,
+      FaFolderOpen,
+    ],
+    [
+      t("dashboard.contacts"),
+      stats.contacts ?? stats.total_contacts ?? 0,
+      FaAddressBook,
+    ],
+    [
+      t("dashboard.auditLogs"),
+      stats.audit_logs ?? stats.total_audit_logs ?? 0,
+      FaClipboardList,
+    ],
   ];
 
   const regions = useMemo(() => {
@@ -196,12 +241,12 @@ export default function Dashboard() {
 
     return raw
       .map((r, index) => ({
-        label: r.region || r.name || r.label || "Non défini",
+        label: r.region || r.name || r.label || t("dashboard.undefinedRegion"),
         total: Number(r.total ?? r.count ?? r.value ?? 0),
         color: chartColors[index % chartColors.length],
       }))
       .filter((r) => r.total > 0);
-  }, [stats]);
+  }, [stats, lang]);
 
   const totalRegions = regions.reduce((sum, r) => sum + r.total, 0);
 
@@ -223,21 +268,23 @@ export default function Dashboard() {
   }, [regions, totalRegions]);
 
   const activities = useMemo(() => {
-    const raw = stats.recent_activities || stats.activities || stats.audit_logs_recent || [];
-    return raw.slice(0, 8).map(formatActivity);
-  }, [stats]);
+    const raw =
+      stats.recent_activities || stats.activities || stats.audit_logs_recent || [];
+
+    return raw.slice(0, 8).map((activity) => formatActivity(activity, lang));
+  }, [stats, lang]);
 
   return (
     <>
-      <Topbar title="Tableau de bord SNIP" />
+      <Topbar title={t("dashboard.title")} />
 
       <div className="dashboard-wrapper">
         <div className="dashboard-title-section">
-        <div className="dashboard-title-content">
-          <img src={snipLogo} alt="SNIP" className="dashboard-title-logo" />
-          <h1>Système National d’Information sur les Personnes</h1>
+          <div className="dashboard-title-content">
+            <img src={snipLogo} alt="SNIP" className="dashboard-title-logo" />
+            <h1>{t("dashboard.systemTitle")}</h1>
+          </div>
         </div>
-      </div>
 
         <div className="cards">
           {cards.map(([label, value, Icon]) => (
@@ -246,6 +293,7 @@ export default function Dashboard() {
                 <Icon className="card-icon" />
                 <h3>{label}</h3>
               </div>
+
               <p>{loading ? "…" : number(value || 0)}</p>
             </div>
           ))}
@@ -255,36 +303,47 @@ export default function Dashboard() {
           <div className="box">
             <div className="box-header">
               <div>
-                <h3>Activités récentes</h3>
-                <p>Dernières actions journalisées</p>
+                <h3>{t("dashboard.recentActivities")}</h3>
+                <p>{t("dashboard.recentActions")}</p>
               </div>
             </div>
 
             <ul className="activities pro-activities">
-              {loading && <li className="activity-empty">Chargement des activités...</li>}
+              {loading && (
+                <li className="activity-empty">
+                  {t("dashboard.loadingActivities")}
+                </li>
+              )}
 
               {!loading && activities.length === 0 && (
-                <li className="activity-empty">Aucune activité récente</li>
+                <li className="activity-empty">
+                  {t("dashboard.noRecentActivity")}
+                </li>
               )}
 
               {!loading &&
-                activities.map((a, i) => (
-                  <li key={a.id || i} className="activity-item">
+                activities.map((activity, index) => (
+                  <li key={activity.id || index} className="activity-item">
                     <div className="activity-icon">
-                      <a.Icon />
+                      <activity.Icon />
                     </div>
 
                     <div className="activity-content">
                       <div className="activity-line">
-                        <strong>{a.actionLabel}</strong>
-                        <span>{a.targetLabel}</span>
+                        <strong>{activity.actionLabel}</strong>
+                        <span>{activity.targetLabel}</span>
                       </div>
 
-                      <p>{a.description}</p>
+                      <p>{activity.description}</p>
 
                       <div className="activity-meta">
-                        <span>Par {a.username}</span>
-                        {a.relativeTime && <span>{a.relativeTime}</span>}
+                        <span>
+                          {t("dashboard.by")} {activity.username}
+                        </span>
+
+                        {activity.relativeTime && (
+                          <span>{activity.relativeTime}</span>
+                        )}
                       </div>
                     </div>
                   </li>
@@ -293,7 +352,7 @@ export default function Dashboard() {
           </div>
 
           <div className="box">
-            <h3>Répartition des personnes par région</h3>
+            <h3>{t("dashboard.regionDistribution")}</h3>
 
             <div className="donut-area">
               <div
@@ -302,23 +361,27 @@ export default function Dashboard() {
               >
                 <div className="donut-center">
                   <strong>{loading ? "…" : number(totalRegions)}</strong>
-                  <span>Total</span>
+                  <span>{t("common.total")}</span>
                 </div>
               </div>
 
               <div className="donut-legend">
-                {loading && <p className="empty-legend">Chargement...</p>}
+                {loading && (
+                  <p className="empty-legend">{t("dashboard.loading")}</p>
+                )}
 
                 {!loading && regions.length === 0 && (
-                  <p className="empty-legend">Aucune donnée régionale disponible.</p>
+                  <p className="empty-legend">
+                    {t("dashboard.noRegionData")}
+                  </p>
                 )}
 
                 {!loading &&
-                  regions.map((r) => (
-                    <div className="legend-item" key={r.label}>
-                      <span style={{ backgroundColor: r.color }} />
-                      <p>{r.label}</p>
-                      <strong>{number(r.total)}</strong>
+                  regions.map((region) => (
+                    <div className="legend-item" key={region.label}>
+                      <span style={{ backgroundColor: region.color }} />
+                      <p>{region.label}</p>
+                      <strong>{number(region.total)}</strong>
                     </div>
                   ))}
               </div>

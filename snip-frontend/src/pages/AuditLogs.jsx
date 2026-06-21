@@ -3,7 +3,12 @@ import { useEffect, useMemo, useState } from "react";
 import Topbar from "../components/Topbar";
 import { auditApi } from "../services/api";
 import { fmtDate, number } from "../utils/format";
+import { t, tr, useLang } from "../i18n";
 import { FaClipboardList, FaSearch, FaSyncAlt } from "react-icons/fa";
+
+function label(lang, fr, en) {
+  return lang === "en" ? en : fr;
+}
 
 function getLogId(log) {
   return log.id || log.log_id || "";
@@ -80,6 +85,8 @@ function normalizeLogs(response) {
 }
 
 export default function AuditLogs() {
+  const lang = useLang();
+
   const [logs, setLogs] = useState([]);
   const [q, setQ] = useState("");
   const [actionFilter, setActionFilter] = useState("");
@@ -145,11 +152,11 @@ export default function AuditLogs() {
 
       return matchesKeyword && matchesAction && matchesTarget && matchesStatus;
     });
-  }, [logs, q, actionFilter, targetFilter, statusFilter]);
+  }, [logs, q, actionFilter, targetFilter, statusFilter, lang]);
 
   return (
     <>
-      <Topbar title="Audit logs" />
+      <Topbar title={t("audit.title")} />
 
       <div className="documents-page">
         <div className="documents-stats">
@@ -159,7 +166,7 @@ export default function AuditLogs() {
             </div>
 
             <div>
-              <h3>Total audit logs</h3>
+              <h3>{t("audit.total")}</h3>
               <p>{loading ? "…" : ready ? number(filteredLogs.length) : "—"}</p>
             </div>
           </div>
@@ -168,13 +175,19 @@ export default function AuditLogs() {
         <div className="documents-table-box">
           <div className="documents-table-header">
             <div>
-              <h3>Journal d’audit</h3>
-              <span>Traçabilité des actions, cibles, endpoints et statuts HTTP</span>
+              <h3>{t("audit.list")}</h3>
+              <span>
+                {label(
+                  lang,
+                  "Traçabilité des actions, cibles, endpoints et statuts HTTP",
+                  "Traceability of actions, targets, endpoints and HTTP statuses"
+                )}
+              </span>
             </div>
 
             <div className="documents-header-actions">
-              <button className="document-add-btn" onClick={loadLogs}>
-                <FaSyncAlt /> Actualiser
+              <button type="button" className="document-add-btn" onClick={loadLogs}>
+                <FaSyncAlt /> {t("common.refresh")}
               </button>
             </div>
           </div>
@@ -185,8 +198,8 @@ export default function AuditLogs() {
 
               <input
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Rechercher utilisateur, action, cible, endpoint..."
+                onChange={(event) => setQ(event.target.value)}
+                placeholder={t("audit.searchPlaceholder")}
               />
             </div>
           </div>
@@ -195,24 +208,24 @@ export default function AuditLogs() {
             <div className="documents-search-box">
               <input
                 value={actionFilter}
-                onChange={(e) => setActionFilter(e.target.value)}
-                placeholder="Filtrer par action"
+                onChange={(event) => setActionFilter(event.target.value)}
+                placeholder={label(lang, "Filtrer par action", "Filter by action")}
               />
             </div>
 
             <div className="documents-search-box">
               <input
                 value={targetFilter}
-                onChange={(e) => setTargetFilter(e.target.value)}
-                placeholder="Filtrer par cible"
+                onChange={(event) => setTargetFilter(event.target.value)}
+                placeholder={label(lang, "Filtrer par cible", "Filter by target")}
               />
             </div>
 
             <div className="documents-search-box">
               <input
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                placeholder="Filtrer par statut"
+                onChange={(event) => setStatusFilter(event.target.value)}
+                placeholder={label(lang, "Filtrer par statut", "Filter by status")}
               />
             </div>
           </div>
@@ -221,16 +234,16 @@ export default function AuditLogs() {
             <table className="documents-table">
               <thead>
                 <tr>
-                  <th>Utilisateur</th>
-                  <th>Action</th>
-                  <th>Cible</th>
-                  <th>ID cible</th>
-                  <th>Méthode</th>
+                  <th>{t("audit.user")}</th>
+                  <th>{t("audit.action")}</th>
+                  <th>{t("audit.targetType")}</th>
+                  <th>{t("audit.targetId")}</th>
+                  <th>{label(lang, "Méthode", "Method")}</th>
                   <th>Endpoint</th>
-                  <th>Statut</th>
-                  <th>IP</th>
-                  <th>Date</th>
-                  <th>Détails</th>
+                  <th>{t("common.status")}</th>
+                  <th>{t("audit.ip")}</th>
+                  <th>{t("audit.date")}</th>
+                  <th>{t("audit.details")}</th>
                 </tr>
               </thead>
 
@@ -238,7 +251,7 @@ export default function AuditLogs() {
                 {loading && (
                   <tr>
                     <td colSpan="10" className="documents-empty">
-                      Chargement...
+                      {t("common.loading")}
                     </td>
                   </tr>
                 )}
@@ -254,7 +267,7 @@ export default function AuditLogs() {
                 {!loading && ready && filteredLogs.length === 0 && (
                   <tr>
                     <td colSpan="10" className="documents-empty">
-                      —
+                      {t("audit.notFound")}
                     </td>
                   </tr>
                 )}
@@ -304,7 +317,10 @@ export default function AuditLogs() {
 
           <div className="documents-pagination">
             <span>
-              Affichage de {ready ? filteredLogs.length : "—"} audit log(s)
+              {tr("audit.display", {
+                shown: ready ? filteredLogs.length : "—",
+                total: ready ? filteredLogs.length : "—",
+              })}
             </span>
           </div>
         </div>

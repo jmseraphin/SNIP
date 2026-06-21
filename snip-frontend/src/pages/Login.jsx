@@ -4,8 +4,14 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { authApi } from "../services/api";
+import { useLang } from "../i18n";
+
+function label(lang, fr, en) {
+  return lang === "en" ? en : fr;
+}
 
 export default function Login() {
+  const lang = useLang();
   const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -31,12 +37,24 @@ export default function Login() {
     setError("");
 
     if (!formData.username.trim()) {
-      setError("Le nom d'utilisateur est obligatoire.");
+      setError(
+        label(
+          lang,
+          "Le nom d'utilisateur est obligatoire.",
+          "Username is required."
+        )
+      );
       return;
     }
 
     if (!formData.password.trim()) {
-      setError("Le mot de passe est obligatoire.");
+      setError(
+        label(
+          lang,
+          "Le mot de passe est obligatoire.",
+          "Password is required."
+        )
+      );
       return;
     }
 
@@ -44,8 +62,15 @@ export default function Login() {
       setLoading(true);
       await authApi.login(formData);
       navigate("/", { replace: true });
-    } catch (err) {
-      setError(err.message || "Nom d'utilisateur ou mot de passe incorrect.");
+    } catch (error) {
+      setError(
+        error.message ||
+          label(
+            lang,
+            "Nom d'utilisateur ou mot de passe incorrect.",
+            "Incorrect username or password."
+          )
+      );
     } finally {
       setLoading(false);
     }
@@ -57,26 +82,44 @@ export default function Login() {
         <img src={logo} alt="Logo SNIP" className="login-logo" />
 
         <div className="security-note">
-          <p>Accès réservé aux utilisateurs autorisés.</p>
-          <p>Toutes les actions sont journalisées.</p>
+          <p>
+            {label(
+              lang,
+              "Accès réservé aux utilisateurs autorisés.",
+              "Access restricted to authorized users."
+            )}
+          </p>
+          <p>
+            {label(
+              lang,
+              "Toutes les actions sont journalisées.",
+              "All actions are logged."
+            )}
+          </p>
         </div>
       </div>
 
       <div className="login-right">
         <div className="login-box">
-          <h2>Connexion</h2>
-          <p className="subtitle">Connectez-vous à votre compte</p>
+          <h2>{label(lang, "Connexion", "Login")}</h2>
+          <p className="subtitle">
+            {label(
+              lang,
+              "Connectez-vous à votre compte",
+              "Sign in to your account"
+            )}
+          </p>
 
           {error && <div className="login-error">{error}</div>}
 
           <form onSubmit={handleSubmit}>
             <div className="input-group">
-              <label>Nom d'utilisateur</label>
+              <label>{label(lang, "Nom d'utilisateur", "Username")}</label>
 
               <input
                 type="text"
                 name="username"
-                placeholder="Nom d'utilisateur"
+                placeholder={label(lang, "Nom d'utilisateur", "Username")}
                 value={formData.username}
                 onChange={handleChange}
                 autoComplete="username"
@@ -85,13 +128,13 @@ export default function Login() {
             </div>
 
             <div className="input-group">
-              <label>Mot de passe</label>
+              <label>{label(lang, "Mot de passe", "Password")}</label>
 
               <div className="password-field">
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
-                  placeholder="Mot de passe"
+                  placeholder={label(lang, "Mot de passe", "Password")}
                   value={formData.password}
                   onChange={handleChange}
                   autoComplete="current-password"
@@ -104,8 +147,8 @@ export default function Login() {
                   onClick={() => setShowPassword((previous) => !previous)}
                   aria-label={
                     showPassword
-                      ? "Masquer le mot de passe"
-                      : "Afficher le mot de passe"
+                      ? label(lang, "Masquer le mot de passe", "Hide password")
+                      : label(lang, "Afficher le mot de passe", "Show password")
                   }
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -122,7 +165,7 @@ export default function Login() {
                   onChange={handleChange}
                 />
 
-                <span>Se souvenir de moi</span>
+                <span>{label(lang, "Se souvenir de moi", "Remember me")}</span>
               </label>
             </div>
 
@@ -134,17 +177,20 @@ export default function Login() {
               {loading ? (
                 <>
                   <Loader2 size={18} className="spinner" />
-                  Connexion...
+                  {label(lang, "Connexion...", "Signing in...")}
                 </>
               ) : (
-                "Se connecter"
+                label(lang, "Se connecter", "Sign in")
               )}
             </button>
           </form>
 
           <div className="login-footer">
             <p>SNIP v1.0</p>
-            <p>© 2026 - Système sécurisé</p>
+            <p>
+              © 2026 -{" "}
+              {label(lang, "Système sécurisé", "Secure system")}
+            </p>
           </div>
         </div>
       </div>

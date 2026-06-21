@@ -13,6 +13,7 @@ import {
   auditApi,
 } from "../services/api";
 import { fmtDate, fullName, nationalId, phone } from "../utils/format";
+import { t, useLang } from "../i18n";
 import {
   FaArrowLeft,
   FaUser,
@@ -31,17 +32,6 @@ import {
 } from "react-icons/fa";
 
 const DASH = "—";
-
-const tabs = [
-  { key: "info", label: "Identité", icon: <FaUser /> },
-  { key: "documents", label: "Documents", icon: <FaIdCard /> },
-  { key: "addresses", label: "Adresses", icon: <FaMapMarkerAlt /> },
-  { key: "contacts", label: "Contacts", icon: <FaAddressBook /> },
-  { key: "relationships", label: "Relations", icon: <FaUsers /> },
-  { key: "events", label: "Événements", icon: <FaHistory /> },
-  { key: "files", label: "Fichiers", icon: <FaFileAlt /> },
-  { key: "audit", label: "Audit", icon: <FaClipboardList /> },
-];
 
 function emptyModule() {
   return { data: [], loading: false, ready: true, error: null };
@@ -110,7 +100,7 @@ function fallbackContacts(person) {
 
   if (person?.phone || person?.telephone || person?.tel) {
     contacts.push({
-      type: "Téléphone",
+      type: t("persons.phone"),
       value: person.phone || person.telephone || person.tel,
       is_primary: true,
     });
@@ -118,7 +108,7 @@ function fallbackContacts(person) {
 
   if (person?.email) {
     contacts.push({
-      type: "Email",
+      type: t("common.email"),
       value: person.email,
       is_primary: !contacts.length,
     });
@@ -127,7 +117,46 @@ function fallbackContacts(person) {
   return contacts;
 }
 
+function translateStatus(status) {
+  const valueStatus = String(status || "active").toLowerCase();
+
+  if (valueStatus === "active") return t("common.active");
+  if (valueStatus === "inactive") return t("common.inactive");
+
+  return status || t("common.active");
+}
+
+function translateGender(gender) {
+  if (!gender) return DASH;
+
+  const current = String(gender).toLowerCase();
+
+  if (current === "m" || current === "masculin" || current === "male") {
+    return t("persons.male");
+  }
+
+  if (
+    current === "f" ||
+    current === "féminin" ||
+    current === "feminin" ||
+    current === "female"
+  ) {
+    return t("persons.female");
+  }
+
+  if (current === "homme" || current === "man") {
+    return t("persons.man");
+  }
+
+  if (current === "femme" || current === "woman") {
+    return t("persons.woman");
+  }
+
+  return gender;
+}
+
 export default function PersonDetails() {
+  const lang = useLang();
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -144,6 +173,20 @@ export default function PersonDetails() {
     files: emptyModule(),
     audit: emptyModule(),
   });
+
+  const tabs = useMemo(
+    () => [
+      { key: "info", label: t("personDetails.identity"), icon: <FaUser /> },
+      { key: "documents", label: t("personDetails.documents"), icon: <FaIdCard /> },
+      { key: "addresses", label: t("personDetails.addresses"), icon: <FaMapMarkerAlt /> },
+      { key: "contacts", label: t("personDetails.contacts"), icon: <FaAddressBook /> },
+      { key: "relationships", label: t("personDetails.relationships"), icon: <FaUsers /> },
+      { key: "events", label: t("personDetails.events"), icon: <FaHistory /> },
+      { key: "files", label: t("personDetails.files"), icon: <FaFileAlt /> },
+      { key: "audit", label: t("audit.title"), icon: <FaClipboardList /> },
+    ],
+    [lang]
+  );
 
   async function safeList(key, loader, listKeys = []) {
     setModules((prev) => ({
@@ -261,22 +304,22 @@ export default function PersonDetails() {
 
   return (
     <>
-      <Topbar title="Vue 360° personne" />
+      <Topbar title={t("personDetails.title")} />
 
       <div className="person-details-page">
-        <button className="back-btn" onClick={() => navigate("/persons")}>
-          <FaArrowLeft /> Retour aux personnes
+        <button type="button" className="back-btn" onClick={() => navigate("/persons")}>
+          <FaArrowLeft /> {t("common.back")}
         </button>
 
         {loading && (
           <div className="details-card">
-            <p>Chargement...</p>
+            <p>{t("common.loading")}</p>
           </div>
         )}
 
         {!loading && !person && (
           <div className="details-card">
-            <h3>Personne introuvable</h3>
+            <h3>{t("persons.notFound")}</h3>
           </div>
         )}
 
@@ -288,8 +331,11 @@ export default function PersonDetails() {
               <div>
                 <h2>{fullName(person) || DASH}</h2>
                 <p>
-                  Vue complète UML : identité, documents, adresses, contacts,
-                  relations, événements, fichiers et audit.
+                  {t("personDetails.identity")}, {t("personDetails.documents")},{" "}
+                  {t("personDetails.addresses")}, {t("personDetails.contacts")},{" "}
+                  {t("personDetails.relationships")}, {t("personDetails.events")},{" "}
+                  {t("personDetails.files")} {t("common.source").toLowerCase()}{" "}
+                  {t("audit.title").toLowerCase()}.
                 </p>
               </div>
 
@@ -300,7 +346,7 @@ export default function PersonDetails() {
                     : "status inactive"
                 }
               >
-                {person.status || "active"}
+                {translateStatus(person.status)}
               </span>
             </div>
 
@@ -314,36 +360,26 @@ export default function PersonDetails() {
                 >
                   {tab.icon}
                   <span>{tab.label}</span>
-
                   {tab.key !== "info" && <b>{counters[tab.key] || 0}</b>}
                 </button>
               ))}
             </div>
 
             {activeTab === "info" && <InfoTab person={person} />}
-
             {activeTab === "documents" && (
               <DocumentsTab module={modules.documents} person={person} />
             )}
-
             {activeTab === "addresses" && (
               <AddressesTab module={modules.addresses} />
             )}
-
             {activeTab === "contacts" && (
               <ContactsTab module={modules.contacts} person={person} />
             )}
-
             {activeTab === "relationships" && (
               <RelationshipsTab module={modules.relationships} />
             )}
-
-            {activeTab === "events" && (
-              <EventsTab module={modules.events} />
-            )}
-
+            {activeTab === "events" && <EventsTab module={modules.events} />}
             {activeTab === "files" && <FilesTab module={modules.files} />}
-
             {activeTab === "audit" && <AuditTab module={modules.audit} />}
           </div>
         )}
@@ -357,69 +393,69 @@ function InfoTab({ person }) {
     <div className="details-grid">
       <Info
         icon={<FaIdCard />}
-        label="CIN / Identifiant national"
+        label={t("persons.nationalId")}
         value={nationalId(person)}
       />
 
       <Info
         icon={<FaUser />}
-        label="Prénom"
+        label={t("persons.firstName")}
         value={value(person.first_name, person.firstName, person.prenom)}
       />
 
       <Info
         icon={<FaUser />}
-        label="Nom"
+        label={t("persons.lastName")}
         value={value(person.last_name, person.lastName, person.nom)}
       />
 
       <Info
         icon={<FaCalendarAlt />}
-        label="Date de naissance"
+        label={t("persons.birth")}
         value={fmtDate(person.birth_date || person.birthDate)}
       />
 
       <Info
         icon={<FaMapMarkerAlt />}
-        label="Lieu de naissance"
+        label={t("persons.birthPlace")}
         value={value(person.birth_place, person.birthPlace)}
       />
 
       <Info
         icon={<FaVenusMars />}
-        label="Genre"
-        value={value(person.gender, person.sexe)}
+        label={t("persons.gender")}
+        value={translateGender(value(person.gender, person.sexe))}
       />
 
       <Info
         icon={<FaFlag />}
-        label="Nationalité"
+        label={t("persons.nationality")}
         value={value(person.nationality)}
       />
 
       <Info
         icon={<FaInfoCircle />}
-        label="Statut"
-        value={value(person.status)}
+        label={t("common.status")}
+        value={translateStatus(person.status)}
       />
 
-      <Info icon={<FaPhone />} label="Téléphone" value={phone(person)} />
+      <Info icon={<FaPhone />} label={t("common.phone")} value={phone(person)} />
 
       <Info
         icon={<FaInfoCircle />}
-        label="Email"
+        label={t("common.email")}
         value={value(person.email)}
       />
 
       <Info
         icon={<FaCalendarAlt />}
-        label="Créé le"
+        label={t("common.createdAt")}
         value={fmtDate(person.created_at || person.createdAt)}
       />
 
       <Info
         icon={<FaCalendarAlt />}
-        label="Modifié le"
+        label={t("common.updatedAt")}
         value={fmtDate(person.updated_at || person.updatedAt)}
       />
     </div>
@@ -433,12 +469,12 @@ function DocumentsTab({ module, person }) {
     <ModuleTable
       module={{ ...module, data, ready: module.ready || data.length > 0 }}
       columns={[
-        "Type",
-        "Numéro",
-        "Délivré par",
-        "Date émission",
-        "Expiration",
-        "Valide",
+        t("documents.type"),
+        t("documents.number"),
+        t("documents.authority"),
+        t("documents.issueDate"),
+        t("documents.expiryDate"),
+        t("documents.validity"),
       ]}
     >
       {data.map((doc, index) => (
@@ -457,9 +493,9 @@ function DocumentsTab({ module, person }) {
           <td>{fmtDate(doc.expiry_date || doc.expires_at)}</td>
           <td>
             {doc.is_valid === true
-              ? "Oui"
+              ? t("common.yes")
               : doc.is_valid === false
-              ? "Non"
+              ? t("common.no")
               : DASH}
           </td>
         </tr>
@@ -472,7 +508,15 @@ function AddressesTab({ module }) {
   return (
     <ModuleTable
       module={module}
-      columns={["Type", "Adresse", "Ville", "Région", "Pays", "Début", "Fin"]}
+      columns={[
+        t("addresses.type"),
+        t("addresses.address"),
+        t("addresses.city"),
+        t("addresses.region"),
+        t("addresses.country"),
+        t("relationships.startDate"),
+        t("relationships.endDate"),
+      ]}
     >
       {module.data.map((item, index) => (
         <tr key={item.id || index}>
@@ -495,13 +539,13 @@ function ContactsTab({ module, person }) {
   return (
     <ModuleTable
       module={{ ...module, data, ready: module.ready || data.length > 0 }}
-      columns={["Type", "Valeur", "Principal"]}
+      columns={[t("contacts.type"), t("contacts.value"), t("common.active")]}
     >
       {data.map((item, index) => (
         <tr key={item.id || index}>
           <td>{value(item.type, item.contact_type)}</td>
           <td>{value(item.value, item.phone, item.email)}</td>
-          <td>{item.is_primary || item.isPrimary ? "Oui" : DASH}</td>
+          <td>{item.is_primary || item.isPrimary ? t("common.yes") : DASH}</td>
         </tr>
       ))}
     </ModuleTable>
@@ -512,7 +556,13 @@ function RelationshipsTab({ module }) {
   return (
     <ModuleTable
       module={module}
-      columns={["Relation", "Personne liée", "Début", "Fin", "Statut"]}
+      columns={[
+        t("relationships.type"),
+        t("relationships.person2"),
+        t("relationships.startDate"),
+        t("relationships.endDate"),
+        t("common.status"),
+      ]}
     >
       {module.data.map((item, index) => (
         <tr key={item.id || index}>
@@ -527,7 +577,7 @@ function RelationshipsTab({ module }) {
           </td>
           <td>{fmtDate(item.start_date || item.startDate)}</td>
           <td>{fmtDate(item.end_date || item.endDate)}</td>
-          <td>{item.is_active === false ? "Inactive" : "Active"}</td>
+          <td>{item.is_active === false ? t("common.inactive") : t("common.active")}</td>
         </tr>
       ))}
     </ModuleTable>
@@ -538,7 +588,13 @@ function EventsTab({ module }) {
   return (
     <ModuleTable
       module={module}
-      columns={["Type", "Titre / Description", "Date", "Source", "Créé le"]}
+      columns={[
+        t("events.type"),
+        t("events.description"),
+        t("events.date"),
+        t("common.source"),
+        t("common.createdAt"),
+      ]}
     >
       {module.data.map((item, index) => (
         <tr key={item.id || index}>
@@ -557,7 +613,13 @@ function FilesTab({ module }) {
   return (
     <ModuleTable
       module={module}
-      columns={["Type", "Nom / URL", "Metadata", "Uploadé le", "Uploadé par"]}
+      columns={[
+        t("files.type"),
+        t("files.name"),
+        "Metadata",
+        "Upload",
+        t("audit.user"),
+      ]}
     >
       {module.data.map((item, index) => (
         <tr key={item.id || index}>
@@ -587,14 +649,14 @@ function AuditTab({ module }) {
     <ModuleTable
       module={module}
       columns={[
-        "Action",
-        "Cible",
-        "ID cible",
+        t("audit.action"),
+        t("audit.targetType"),
+        t("audit.targetId"),
         "Méthode",
         "Endpoint",
-        "Statut",
-        "IP",
-        "Date",
+        t("common.status"),
+        t("audit.ip"),
+        t("audit.date"),
       ]}
     >
       {module.data.map((item, index) => (
@@ -615,17 +677,14 @@ function AuditTab({ module }) {
 
 function ModuleTable({ module, columns, children }) {
   if (module.loading) {
-    return <div className="module-empty module-loading">Chargement...</div>;
+    return <div className="module-empty module-loading">{t("common.loading")}</div>;
   }
 
   if (!module.ready) {
     return (
       <div className="module-empty">
         <strong>{DASH}</strong>
-        <span>
-          Module backend pas encore disponible. Dès que l'endpoint sera ajouté,
-          les données s'afficheront automatiquement.
-        </span>
+        <span>{t("common.noData")}</span>
       </div>
     );
   }
@@ -634,7 +693,7 @@ function ModuleTable({ module, columns, children }) {
     return (
       <div className="module-empty">
         <strong>{DASH}</strong>
-        <span>Aucune donnée enregistrée pour ce module.</span>
+        <span>{t("personDetails.noModuleData")}</span>
       </div>
     );
   }

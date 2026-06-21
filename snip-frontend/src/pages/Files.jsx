@@ -9,6 +9,7 @@ import {
   personsApi,
 } from "../services/api";
 import { fmtDate, number } from "../utils/format";
+import { t, tr, useLang } from "../i18n";
 import {
   FaFileAlt,
   FaSearch,
@@ -26,7 +27,13 @@ const emptyForm = {
   metadata: "",
 };
 
+function label(lang, fr, en) {
+  return lang === "en" ? en : fr;
+}
+
 export default function Files() {
+  const lang = useLang();
+
   const [files, setFiles] = useState([]);
   const [persons, setPersons] = useState([]);
   const [q, setQ] = useState("");
@@ -37,16 +44,18 @@ export default function Files() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
-  const personName = (p) =>
-    `${p.last_name || p.nom || ""} ${p.first_name || p.prenom || ""}`.trim() ||
-    p.full_name ||
-    p.name ||
-    "Personne sans nom";
+  const personName = (person) =>
+    `${person.last_name || person.nom || ""} ${
+      person.first_name || person.prenom || ""
+    }`.trim() ||
+    person.full_name ||
+    person.name ||
+    label(lang, "Personne sans nom", "Unnamed person");
 
-  const fileName = (f) =>
-    f.original_name || f.filename || f.file_name || f.name || "Fichier";
+  const fileName = (file) =>
+    file.original_name || file.filename || file.file_name || file.name || t("files.name");
 
-  const fileUrl = (f) => f.file_url || f.url || f.path || f.file_path || "";
+  const fileUrl = (file) => file.file_url || file.url || file.path || file.file_path || "";
 
   const loadPersons = async () => {
     try {
@@ -54,11 +63,11 @@ export default function Files() {
 
       const ids = (logs.data || [])
         .filter(
-          (l) =>
-            String(l.target_type || l.targetType || "").toLowerCase() ===
+          (log) =>
+            String(log.target_type || log.targetType || "").toLowerCase() ===
             "person"
         )
-        .map((l) => l.target_id || l.targetId)
+        .map((log) => log.target_id || log.targetId)
         .filter(Boolean);
 
       const uniqueIds = [...new Set(ids)];
@@ -90,15 +99,15 @@ export default function Files() {
       const people = await loadPersons();
 
       const all = await Promise.all(
-        people.map(async (p) => {
+        people.map(async (person) => {
           try {
-            const res = await filesApi.listByPerson(p.id);
+            const res = await filesApi.listByPerson(person.id);
             const list = res.data || res.files || res.results || [];
 
-            return list.map((f) => ({
-              ...f,
-              person_id: p.id,
-              person_name: personName(p),
+            return list.map((file) => ({
+              ...file,
+              person_id: person.id,
+              person_name: personName(person),
             }));
           } catch {
             return [];
@@ -123,50 +132,51 @@ export default function Files() {
 
     if (!keyword) return persons;
 
-    return persons.filter((p) =>
+    return persons.filter((person) =>
       [
-        p.last_name,
-        p.first_name,
-        p.nom,
-        p.prenom,
-        p.full_name,
-        p.name,
-        p.cin,
-        p.phone,
-        p.telephone,
-        p.email,
-        p.id,
+        person.last_name,
+        person.first_name,
+        person.nom,
+        person.prenom,
+        person.full_name,
+        person.name,
+        person.cin,
+        person.phone,
+        person.telephone,
+        person.email,
+        person.id,
+        personName(person),
       ]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
         .includes(keyword)
     );
-  }, [persons, personSearch]);
+  }, [persons, personSearch, lang]);
 
   const filteredFiles = useMemo(() => {
     const keyword = q.toLowerCase();
 
     if (!keyword) return files;
 
-    return files.filter((f) =>
+    return files.filter((file) =>
       [
-        fileName(f),
-        f.file_type,
-        f.type,
-        f.mime_type,
-        f.person_name,
-        f.person_id,
-        JSON.stringify(f.metadata || {}),
-        f.created_at,
-        f.uploaded_at,
+        fileName(file),
+        file.file_type,
+        file.type,
+        file.mime_type,
+        file.person_name,
+        file.person_id,
+        JSON.stringify(file.metadata || {}),
+        file.created_at,
+        file.uploaded_at,
       ]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
         .includes(keyword)
     );
-  }, [files, q]);
+  }, [files, q, lang]);
 
   const openUpload = async () => {
     setForm(emptyForm);
@@ -181,12 +191,12 @@ export default function Files() {
       setError("");
 
       if (!form.person_id) {
-        setError("Veuillez choisir une personne.");
+        setError(label(lang, "Veuillez choisir une personne.", "Please choose a person."));
         return;
       }
 
       if (!form.file) {
-        setError("Veuillez choisir un fichier.");
+        setError(label(lang, "Veuillez choisir un fichier.", "Please choose a file."));
         return;
       }
 
@@ -210,8 +220,8 @@ export default function Files() {
       setForm(emptyForm);
       setPersonSearch("");
       await load();
-    } catch (e) {
-      setError(e.message || "Erreur lors de l’upload.");
+    } catch (error) {
+      setError(error.message || t("files.saveError"));
     } finally {
       setUploading(false);
     }
@@ -226,40 +236,40 @@ export default function Files() {
       });
 
       if (!res.ok) {
-        alert("Téléchargement impossible.");
+        alert(t("files.downloadError"));
         return;
       }
 
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
 
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName(file);
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName(file);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
       window.URL.revokeObjectURL(url);
     } catch {
-      alert("Erreur lors du téléchargement.");
+      alert(t("files.downloadError"));
     }
   };
 
   const remove = async (file) => {
-    if (!window.confirm("Supprimer ce fichier ?")) return;
+    if (!window.confirm(t("files.deleteConfirm"))) return;
 
     try {
       await filesApi.remove(file.id);
       await load();
-    } catch (e) {
-      alert(e.message || "Suppression impossible.");
+    } catch (error) {
+      alert(error.message || t("files.deleteError"));
     }
   };
 
   return (
     <>
-      <Topbar title="Gestion des fichiers" />
+      <Topbar title={t("files.title")} />
 
       <div className="files-page">
         <div className="files-stats">
@@ -267,8 +277,9 @@ export default function Files() {
             <div className="file-stat-icon">
               <FaFileAlt />
             </div>
+
             <div>
-              <h3>Total fichiers</h3>
+              <h3>{t("files.total")}</h3>
               <p>{loading ? "…" : number(files.length)}</p>
             </div>
           </div>
@@ -277,22 +288,29 @@ export default function Files() {
         <div className="files-table-box">
           <div className="files-table-header">
             <div>
-              <h3>Liste des fichiers</h3>
-              <span>Fichiers numériques attachés aux personnes</span>
+              <h3>{t("files.list")}</h3>
+              <span>
+                {label(
+                  lang,
+                  "Fichiers numériques attachés aux personnes",
+                  "Digital files attached to persons"
+                )}
+              </span>
             </div>
 
-            <button className="file-add-btn" onClick={openUpload}>
-              <FaUpload /> Importer
+            <button type="button" className="file-add-btn" onClick={openUpload}>
+              <FaUpload /> {t("files.upload")}
             </button>
           </div>
 
           <div className="files-filters">
             <div className="files-search-box">
               <FaSearch className="files-search-icon" />
+
               <input
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Rechercher fichier, personne, type..."
+                onChange={(event) => setQ(event.target.value)}
+                placeholder={t("files.searchPlaceholder")}
               />
             </div>
           </div>
@@ -301,12 +319,12 @@ export default function Files() {
             <table className="files-table">
               <thead>
                 <tr>
-                  <th>Fichier</th>
-                  <th>Personne</th>
-                  <th>Type</th>
-                  <th>URL / Chemin</th>
-                  <th>Date upload</th>
-                  <th className="files-actions-col">Actions</th>
+                  <th>{t("files.name")}</th>
+                  <th>{t("files.person")}</th>
+                  <th>{t("files.type")}</th>
+                  <th>{t("files.url")}</th>
+                  <th>{label(lang, "Date upload", "Upload date")}</th>
+                  <th className="files-actions-col">{t("common.actions")}</th>
                 </tr>
               </thead>
 
@@ -314,7 +332,7 @@ export default function Files() {
                 {loading && (
                   <tr>
                     <td colSpan="6" className="files-empty">
-                      Chargement des fichiers...
+                      {t("files.loadingData")}
                     </td>
                   </tr>
                 )}
@@ -322,7 +340,7 @@ export default function Files() {
                 {!loading && filteredFiles.length === 0 && (
                   <tr>
                     <td colSpan="6" className="files-empty">
-                      Aucun fichier trouvé
+                      {t("files.notFound")}
                     </td>
                   </tr>
                 )}
@@ -335,6 +353,7 @@ export default function Files() {
                           <div className="file-avatar">
                             <FaFileAlt />
                           </div>
+
                           <div>
                             <h4>{fileName(file)}</h4>
                             <span>
@@ -364,8 +383,9 @@ export default function Files() {
                         <div className="file-action-buttons">
                           {file.id && (
                             <button
+                              type="button"
                               className="file-icon-action file-download-btn"
-                              data-tooltip="Télécharger"
+                              data-tooltip={t("common.download")}
                               onClick={() => downloadFile(file)}
                             >
                               <FaDownload />
@@ -373,8 +393,9 @@ export default function Files() {
                           )}
 
                           <button
+                            type="button"
                             className="file-icon-action file-delete-btn"
-                            data-tooltip="Supprimer"
+                            data-tooltip={t("common.delete")}
                             onClick={() => remove(file)}
                           >
                             <FaTrash />
@@ -389,8 +410,10 @@ export default function Files() {
 
           <div className="files-pagination">
             <span>
-              Affichage de {filteredFiles.length} sur {number(files.length)}{" "}
-              fichier(s)
+              {tr("files.display", {
+                shown: filteredFiles.length,
+                total: number(files.length),
+              })}
             </span>
           </div>
         </div>
@@ -399,21 +422,25 @@ export default function Files() {
       {modal && (
         <div className="files-modal-overlay">
           <div className="files-modal-box">
-            <button className="files-modal-close" onClick={() => setModal(false)}>
+            <button
+              type="button"
+              className="files-modal-close"
+              onClick={() => setModal(false)}
+            >
               <FaTimes />
             </button>
 
-            <h3>Importer un fichier</h3>
+            <h3>{t("files.upload")}</h3>
 
             {error && <div className="files-error">{error}</div>}
 
             <div className="files-form-grid">
               <div className="person-picker">
                 <input
-                  placeholder="Rechercher une personne..."
+                  placeholder={t("files.person")}
                   value={personSearch}
-                  onChange={(e) => {
-                    setPersonSearch(e.target.value);
+                  onChange={(event) => {
+                    setPersonSearch(event.target.value);
                     setForm({ ...form, person_id: "" });
                   }}
                 />
@@ -421,29 +448,34 @@ export default function Files() {
                 <div className="person-picker-list">
                   {filteredPersons.length === 0 && (
                     <div className="person-picker-empty">
-                      Aucune personne trouvée
+                      {t("relationships.noPerson")}
                     </div>
                   )}
 
-                  {filteredPersons.slice(0, 10).map((p) => {
-                    const name = personName(p);
+                  {filteredPersons.slice(0, 10).map((person) => {
+                    const name = personName(person);
 
                     return (
                       <button
                         type="button"
-                        key={p.id}
+                        key={person.id}
                         className={
-                          form.person_id === p.id
+                          form.person_id === person.id
                             ? "person-picker-item active"
                             : "person-picker-item"
                         }
                         onClick={() => {
-                          setForm({ ...form, person_id: p.id });
+                          setForm({ ...form, person_id: person.id });
                           setPersonSearch(name);
                         }}
                       >
                         <strong>{name}</strong>
-                        <span>{p.cin || p.phone || p.telephone || p.id}</span>
+                        <span>
+                          {person.cin ||
+                            person.phone ||
+                            person.telephone ||
+                            person.id}
+                        </span>
                       </button>
                     );
                   })}
@@ -451,32 +483,47 @@ export default function Files() {
               </div>
 
               <input
-                placeholder="Type de fichier"
+                placeholder={t("files.type")}
                 value={form.file_type}
-                onChange={(e) => setForm({ ...form, file_type: e.target.value })}
+                onChange={(event) =>
+                  setForm({ ...form, file_type: event.target.value })
+                }
               />
 
               <input
                 type="file"
-                onChange={(e) =>
-                  setForm({ ...form, file: e.target.files?.[0] || null })
+                onChange={(event) =>
+                  setForm({ ...form, file: event.target.files?.[0] || null })
                 }
               />
 
               <textarea
-                placeholder="Metadata / description"
+                placeholder={t("files.description")}
                 value={form.metadata}
-                onChange={(e) => setForm({ ...form, metadata: e.target.value })}
+                onChange={(event) =>
+                  setForm({ ...form, metadata: event.target.value })
+                }
               />
             </div>
 
             <div className="files-modal-actions">
-              <button className="files-cancel-btn" onClick={() => setModal(false)}>
-                Annuler
+              <button
+                type="button"
+                className="files-cancel-btn"
+                onClick={() => setModal(false)}
+              >
+                {t("common.cancel")}
               </button>
 
-              <button className="files-save-btn" onClick={upload} disabled={uploading}>
-                {uploading ? "Importation..." : "Importer"}
+              <button
+                type="button"
+                className="files-save-btn"
+                onClick={upload}
+                disabled={uploading}
+              >
+                {uploading
+                  ? label(lang, "Importation...", "Uploading...")
+                  : t("files.upload")}
               </button>
             </div>
           </div>

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Topbar from "../components/Topbar";
 import { usersApi } from "../services/api";
 import { fmtDate, number } from "../utils/format";
+import { t, tr, useLang } from "../i18n";
 import {
   FaUserShield,
   FaSearch,
@@ -26,6 +27,10 @@ const emptyUserForm = {
   status: "active",
   password: "",
 };
+
+function label(lang, fr, en) {
+  return lang === "en" ? en : fr;
+}
 
 function getUserId(user) {
   return user.id || user.user_id || "";
@@ -80,6 +85,16 @@ function getUserStatus(user) {
   );
 }
 
+function displayStatus(status, lang) {
+  const value = String(status || "active").toLowerCase();
+
+  if (value === "active") return t("users.active");
+  if (value === "inactive") return t("users.inactive");
+  if (value === "locked") return t("users.locked");
+
+  return label(lang, status || "active", status || "active");
+}
+
 function getRolePermissions(role) {
   const value = role.permissions || role.permission || role.rules || "";
 
@@ -109,32 +124,30 @@ function passwordIsValid(password) {
   );
 }
 
-function getBackendError(e, fallback) {
+function getBackendError(error, fallback) {
   return (
-    e?.data?.message ||
-    e?.data?.error ||
-    e?.data?.details ||
-    e?.message ||
+    error?.data?.message ||
+    error?.data?.error ||
+    error?.data?.details ||
+    error?.message ||
     fallback
   );
 }
 
 export default function UsersRoles() {
-  const [activeTab, setActiveTab] = useState("users");
+  const lang = useLang();
 
+  const [activeTab, setActiveTab] = useState("users");
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
-
   const [q, setQ] = useState("");
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [loadingRoles, setLoadingRoles] = useState(true);
   const [usersReady, setUsersReady] = useState(true);
   const [rolesReady, setRolesReady] = useState(true);
-
   const [userModal, setUserModal] = useState(null);
   const [userForm, setUserForm] = useState(emptyUserForm);
   const [showPassword, setShowPassword] = useState(false);
-
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -194,6 +207,7 @@ export default function UsersRoles() {
         getUserFullName(user),
         getUserRoleName(user, roles),
         getUserStatus(user),
+        displayStatus(getUserStatus(user), lang),
         getUserId(user),
       ]
         .filter(Boolean)
@@ -202,7 +216,7 @@ export default function UsersRoles() {
 
       return values.includes(keyword);
     });
-  }, [users, roles, q]);
+  }, [users, roles, q, lang]);
 
   const filteredRoles = useMemo(() => {
     const keyword = String(q || "").toLowerCase().trim();
@@ -253,33 +267,37 @@ export default function UsersRoles() {
       setError("");
 
       if (!userForm.full_name) {
-        setError("Le nom complet est obligatoire.");
+        setError(label(lang, "Le nom complet est obligatoire.", "Full name is required."));
         return;
       }
 
       if (!userForm.username) {
-        setError("Le nom d’utilisateur est obligatoire.");
+        setError(label(lang, "Le nom d’utilisateur est obligatoire.", "Username is required."));
         return;
       }
 
       if (!userForm.email) {
-        setError("L’email est obligatoire.");
+        setError(label(lang, "L’email est obligatoire.", "Email is required."));
         return;
       }
 
       if (!userForm.role_id) {
-        setError("Le rôle est obligatoire.");
+        setError(label(lang, "Le rôle est obligatoire.", "Role is required."));
         return;
       }
 
       if (userModal === "create" && !userForm.password) {
-        setError("Le mot de passe est obligatoire.");
+        setError(label(lang, "Le mot de passe est obligatoire.", "Password is required."));
         return;
       }
 
       if (userForm.password && !passwordIsValid(userForm.password)) {
         setError(
-          "Mot de passe invalide : 8 caractères minimum, majuscule, minuscule, chiffre et caractère spécial."
+          label(
+            lang,
+            "Mot de passe invalide : 8 caractères minimum, majuscule, minuscule, chiffre et caractère spécial.",
+            "Invalid password: minimum 8 characters, uppercase, lowercase, number and special character."
+          )
         );
         return;
       }
@@ -319,7 +337,7 @@ export default function UsersRoles() {
       setError("");
       setUserForm(emptyUserForm);
       await loadUsers();
-    } catch (e) {
+    } catch (error) {
       if (userModal === "create") {
         try {
           const response = await usersApi.list({
@@ -342,11 +360,11 @@ export default function UsersRoles() {
             return;
           }
         } catch {
-    
+          setError("");
         }
       }
 
-      setError(getBackendError(e, "Erreur lors de l’enregistrement."));
+      setError(getBackendError(error, t("users.saveError")));
     } finally {
       setSaving(false);
     }
@@ -357,19 +375,19 @@ export default function UsersRoles() {
       const id = getUserId(user);
       if (!id) return;
 
-      const confirmed = window.confirm("Supprimer cet utilisateur ?");
+      const confirmed = window.confirm(t("users.deleteConfirm"));
       if (!confirmed) return;
 
       await usersApi.remove(id);
       await loadUsers();
-    } catch (e) {
-      setError(getBackendError(e, "Erreur lors de la suppression."));
+    } catch (error) {
+      setError(getBackendError(error, t("users.deleteError")));
     }
   }
 
   return (
     <>
-      <Topbar title="Utilisateurs & rôles" />
+      <Topbar title={t("users.title")} />
 
       <div className="documents-page">
         <div className="documents-stats">
@@ -379,7 +397,7 @@ export default function UsersRoles() {
             </div>
 
             <div>
-              <h3>Total utilisateurs</h3>
+              <h3>{t("users.total")}</h3>
               <p>
                 {loadingUsers
                   ? "…"
@@ -396,7 +414,7 @@ export default function UsersRoles() {
             </div>
 
             <div>
-              <h3>Total rôles</h3>
+              <h3>{label(lang, "Total rôles", "Total roles")}</h3>
               <p>
                 {loadingRoles
                   ? "…"
@@ -411,18 +429,28 @@ export default function UsersRoles() {
         <div className="documents-table-box">
           <div className="documents-table-header">
             <div>
-              <h3>Gestion des accès</h3>
-              <span>Utilisateurs, rôles et permissions du système SNIP</span>
+              <h3>{label(lang, "Gestion des accès", "Access management")}</h3>
+              <span>
+                {label(
+                  lang,
+                  "Utilisateurs, rôles et permissions du système SNIP",
+                  "Users, roles and permissions of the SNIP system"
+                )}
+              </span>
             </div>
 
             <div className="documents-header-actions">
-              <button className="document-add-btn" onClick={refreshAll}>
-                <FaSyncAlt /> Actualiser
+              <button type="button" className="document-add-btn" onClick={refreshAll}>
+                <FaSyncAlt /> {t("common.refresh")}
               </button>
 
               {activeTab === "users" && (
-                <button className="document-add-btn" onClick={openCreateUser}>
-                  <FaPlus /> Ajouter
+                <button
+                  type="button"
+                  className="document-add-btn"
+                  onClick={openCreateUser}
+                >
+                  <FaPlus /> {t("common.add")}
                 </button>
               )}
             </div>
@@ -434,7 +462,7 @@ export default function UsersRoles() {
               className={activeTab === "users" ? "active" : ""}
               onClick={() => setActiveTab("users")}
             >
-              <FaUserShield /> Utilisateurs
+              <FaUserShield /> {t("users.list")}
             </button>
 
             <button
@@ -442,7 +470,7 @@ export default function UsersRoles() {
               className={activeTab === "roles" ? "active" : ""}
               onClick={() => setActiveTab("roles")}
             >
-              <FaKey /> Rôles & permissions
+              <FaKey /> {t("settings.roles")}
             </button>
           </div>
 
@@ -452,11 +480,11 @@ export default function UsersRoles() {
 
               <input
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
+                onChange={(event) => setQ(event.target.value)}
                 placeholder={
                   activeTab === "users"
-                    ? "Rechercher utilisateur, email, rôle..."
-                    : "Rechercher rôle ou permission..."
+                    ? t("users.searchPlaceholder")
+                    : label(lang, "Rechercher rôle ou permission...", "Search role or permission...")
                 }
               />
             </div>
@@ -469,13 +497,13 @@ export default function UsersRoles() {
               <table className="documents-table">
                 <thead>
                   <tr>
-                    <th>Nom complet</th>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Rôle</th>
-                    <th>Statut</th>
-                    <th>Créé le</th>
-                    <th>Actions</th>
+                    <th>{t("users.fullName")}</th>
+                    <th>{t("users.username")}</th>
+                    <th>{t("users.email")}</th>
+                    <th>{t("users.role")}</th>
+                    <th>{t("users.status")}</th>
+                    <th>{t("common.createdAt")}</th>
+                    <th>{t("common.actions")}</th>
                   </tr>
                 </thead>
 
@@ -483,7 +511,7 @@ export default function UsersRoles() {
                   {loadingUsers && (
                     <tr>
                       <td colSpan="7" className="documents-empty">
-                        Chargement...
+                        {t("common.loading")}
                       </td>
                     </tr>
                   )}
@@ -499,7 +527,7 @@ export default function UsersRoles() {
                   {!loadingUsers && usersReady && filteredUsers.length === 0 && (
                     <tr>
                       <td colSpan="7" className="documents-empty">
-                        —
+                        {t("users.notFound")}
                       </td>
                     </tr>
                   )}
@@ -526,7 +554,7 @@ export default function UsersRoles() {
                                 : "document-unknown"
                             }
                           >
-                            {getUserStatus(user)}
+                            {displayStatus(getUserStatus(user), lang)}
                           </span>
                         </td>
 
@@ -539,17 +567,19 @@ export default function UsersRoles() {
                         <td>
                           <div className="document-action-buttons">
                             <button
+                              type="button"
                               className="document-icon-action"
                               onClick={() => openEditUser(user)}
-                              title="Modifier"
+                              title={t("common.edit")}
                             >
                               <FaEdit />
                             </button>
 
                             <button
+                              type="button"
                               className="document-icon-action document-delete-btn"
                               onClick={() => removeUser(user)}
-                              title="Supprimer"
+                              title={t("common.delete")}
                             >
                               <FaTrash />
                             </button>
@@ -567,10 +597,10 @@ export default function UsersRoles() {
               <table className="documents-table">
                 <thead>
                   <tr>
-                    <th>Rôle</th>
-                    <th>Description</th>
-                    <th>Permissions</th>
-                    <th>Créé le</th>
+                    <th>{t("common.role")}</th>
+                    <th>{t("common.description")}</th>
+                    <th>{t("users.permissions")}</th>
+                    <th>{t("common.createdAt")}</th>
                   </tr>
                 </thead>
 
@@ -578,7 +608,7 @@ export default function UsersRoles() {
                   {loadingRoles && (
                     <tr>
                       <td colSpan="4" className="documents-empty">
-                        Chargement...
+                        {t("common.loading")}
                       </td>
                     </tr>
                   )}
@@ -594,7 +624,7 @@ export default function UsersRoles() {
                   {!loadingRoles && rolesReady && filteredRoles.length === 0 && (
                     <tr>
                       <td colSpan="4" className="documents-empty">
-                        —
+                        {label(lang, "Aucun rôle trouvé", "No role found")}
                       </td>
                     </tr>
                   )}
@@ -610,7 +640,6 @@ export default function UsersRoles() {
                         </td>
 
                         <td>{role.description || "—"}</td>
-
                         <td>{getRolePermissions(role)}</td>
 
                         <td>
@@ -627,15 +656,24 @@ export default function UsersRoles() {
 
           <div className="documents-pagination">
             <span>
-              Affichage de{" "}
-              {activeTab === "users"
-                ? usersReady
-                  ? filteredUsers.length
-                  : "—"
-                : rolesReady
-                ? filteredRoles.length
-                : "—"}{" "}
-              élément(s)
+              {tr("users.display", {
+                shown:
+                  activeTab === "users"
+                    ? usersReady
+                      ? filteredUsers.length
+                      : "—"
+                    : rolesReady
+                    ? filteredRoles.length
+                    : "—",
+                total:
+                  activeTab === "users"
+                    ? usersReady
+                      ? filteredUsers.length
+                      : "—"
+                    : rolesReady
+                    ? filteredRoles.length
+                    : "—",
+              })}
             </span>
           </div>
         </div>
@@ -645,64 +683,63 @@ export default function UsersRoles() {
         <div className="documents-modal-overlay">
           <div className="documents-modal-box">
             <button
+              type="button"
               className="documents-modal-close"
               onClick={() => setUserModal(null)}
             >
               <FaTimes />
             </button>
 
-            <h3>
-              {userModal === "create"
-                ? "Ajouter un utilisateur"
-                : "Modifier utilisateur"}
-            </h3>
+            <h3>{userModal === "create" ? t("users.add") : t("users.edit")}</h3>
 
             {error && <div className="documents-error">{error}</div>}
 
             <div className="documents-form-grid">
               <div className="document-field">
-                <label>Nom complet</label>
+                <label>{t("users.fullName")}</label>
                 <input
                   value={userForm.full_name}
-                  onChange={(e) =>
-                    setUserForm({ ...userForm, full_name: e.target.value })
+                  onChange={(event) =>
+                    setUserForm({ ...userForm, full_name: event.target.value })
                   }
-                  placeholder="Nom complet"
+                  placeholder={t("users.fullName")}
                 />
               </div>
 
               <div className="document-field">
-                <label>Username</label>
+                <label>{t("users.username")}</label>
                 <input
                   value={userForm.username}
-                  onChange={(e) =>
-                    setUserForm({ ...userForm, username: e.target.value })
+                  onChange={(event) =>
+                    setUserForm({ ...userForm, username: event.target.value })
                   }
-                  placeholder="Nom d’utilisateur"
+                  placeholder={t("users.username")}
                 />
               </div>
 
               <div className="document-field">
-                <label>Email</label>
+                <label>{t("users.email")}</label>
                 <input
                   type="email"
                   value={userForm.email}
-                  onChange={(e) =>
-                    setUserForm({ ...userForm, email: e.target.value })
+                  onChange={(event) =>
+                    setUserForm({ ...userForm, email: event.target.value })
                   }
-                  placeholder="Email"
+                  placeholder={t("users.email")}
                 />
               </div>
 
               <div className="document-field">
-                <label>Rôle</label>
+                <label>{t("users.role")}</label>
                 <select
                   value={userForm.role_id}
-                  onChange={(e) =>
-                    setUserForm({ ...userForm, role_id: e.target.value })
+                  onChange={(event) =>
+                    setUserForm({ ...userForm, role_id: event.target.value })
                   }
                 >
-                  <option value="">Sélectionner un rôle</option>
+                  <option value="">
+                    {label(lang, "Sélectionner un rôle", "Select a role")}
+                  </option>
 
                   {roles.map((role) => (
                     <option key={getRoleId(role)} value={getRoleId(role)}>
@@ -713,33 +750,37 @@ export default function UsersRoles() {
               </div>
 
               <div className="document-field">
-                <label>Statut</label>
+                <label>{t("users.status")}</label>
                 <select
                   value={userForm.status}
-                  onChange={(e) =>
-                    setUserForm({ ...userForm, status: e.target.value })
+                  onChange={(event) =>
+                    setUserForm({ ...userForm, status: event.target.value })
                   }
                   disabled={userModal === "create"}
                 >
-                  <option value="active">Actif</option>
-                  <option value="inactive">Inactif</option>
-                  <option value="locked">Verrouillé</option>
+                  <option value="active">{t("users.active")}</option>
+                  <option value="inactive">{t("users.inactive")}</option>
+                  <option value="locked">{t("users.locked")}</option>
                 </select>
               </div>
 
               <div className="document-field password-field">
-                <label>Mot de passe</label>
+                <label>{t("users.password")}</label>
 
                 <div className="password-input-wrap">
                   <input
                     type={showPassword ? "text" : "password"}
                     value={userForm.password}
-                    onChange={(e) =>
-                      setUserForm({ ...userForm, password: e.target.value })
+                    onChange={(event) =>
+                      setUserForm({ ...userForm, password: event.target.value })
                     }
                     placeholder={
                       userModal === "edit"
-                        ? "Laisser vide pour ne pas changer"
+                        ? label(
+                            lang,
+                            "Laisser vide pour ne pas changer",
+                            "Leave empty to keep unchanged"
+                          )
                         : "Ex: Admin@123"
                     }
                   />
@@ -750,8 +791,8 @@ export default function UsersRoles() {
                     onClick={() => setShowPassword((value) => !value)}
                     title={
                       showPassword
-                        ? "Masquer le mot de passe"
-                        : "Afficher le mot de passe"
+                        ? label(lang, "Masquer le mot de passe", "Hide password")
+                        : label(lang, "Afficher le mot de passe", "Show password")
                     }
                   >
                     {showPassword ? <FaEyeSlash /> : <FaEye />}
@@ -762,19 +803,21 @@ export default function UsersRoles() {
 
             <div className="documents-modal-actions">
               <button
+                type="button"
                 className="documents-cancel-btn"
                 onClick={() => setUserModal(null)}
                 disabled={saving}
               >
-                Annuler
+                {t("common.cancel")}
               </button>
 
               <button
+                type="button"
                 className="documents-save-btn"
                 onClick={saveUser}
                 disabled={saving}
               >
-                <FaSave /> {saving ? "Enregistrement..." : "Enregistrer"}
+                <FaSave /> {saving ? t("common.loading") : t("common.save")}
               </button>
             </div>
           </div>
