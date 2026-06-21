@@ -86,44 +86,46 @@ export default function Sidebar({ collapsed, setCollapsed }) {
 
   return (
     <div className={collapsed ? "sidebar collapsed" : "sidebar"}>
-      <div className="sidebar-header">
+      <div className="sidebar-inner">
+        <div className="sidebar-header">
+          {!collapsed && (
+            <div className="logo-container">
+              <img src={hero} alt="SNIP Logo" className="logo-image" />
+            </div>
+          )}
+
+          <button
+            type="button"
+            className="toggle-btn"
+            onClick={() => setCollapsed(!collapsed)}
+          >
+            <FaBars />
+          </button>
+        </div>
+
+        <ul className="menu">
+          {menuItems.map(({ to, icon: Icon, label }) => (
+            <li key={to}>
+              <NavLink
+                to={to}
+                className={({ isActive }) =>
+                  isActive ? "menu-link active" : "menu-link"
+                }
+              >
+                <Icon className="menu-icon" />
+                <span>{label}</span>
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+
         {!collapsed && (
-          <div className="logo-container">
-            <img src={hero} alt="SNIP Logo" className="logo-image" />
+          <div className="sidebar-footer">
+            <p>{t("app.version")}</p>
+            <small>{t("app.secure")}</small>
           </div>
         )}
-
-        <button
-          type="button"
-          className="toggle-btn"
-          onClick={() => setCollapsed(!collapsed)}
-        >
-          <FaBars />
-        </button>
       </div>
-
-      <ul className="menu">
-        {menuItems.map(({ to, icon: Icon, label }) => (
-          <li key={to}>
-            <NavLink
-              to={to}
-              className={({ isActive }) =>
-                isActive ? "menu-link active" : "menu-link"
-              }
-            >
-              <Icon className="menu-icon" />
-              <span>{label}</span>
-            </NavLink>
-          </li>
-        ))}
-      </ul>
-
-      {!collapsed && (
-        <div className="sidebar-footer">
-          <p>{t("app.version")}</p>
-          <small>{t("app.secure")}</small>
-        </div>
-      )}
     </div>
   );
 }
