@@ -153,3 +153,76 @@
     font-size: 11px;
   }
 }
+
+.settings-page {
+  padding: 24px;
+}
+
+.settings-success,
+.settings-warning {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.settings-success {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.settings-warning {
+  background: #fff7ed;
+  color: #9a3412;
+  border: 1px solid #fdba74;
+}
+
+.settings-content button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.settings-content small {
+  display: block;
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.settings-logo-preview {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 10px;
+}
+
+body.dark-mode {
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+body.dark-mode .settings-card,
+body.dark-mode .settings-content input,
+body.dark-mode .settings-content select,
+body.dark-mode .settings-content textarea {
+  background: #111827;
+  color: #e5e7eb;
+  border-color: #334155;
+}
+
+body.dark-mode .settings-card h3,
+body.dark-mode .settings-content label,
+body.dark-mode .switch-row span {
+  color: #e5e7eb;
+}
+
+body.dark-mode .settings-content small {
+  color: #94a3b8;
+}

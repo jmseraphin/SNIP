@@ -68,35 +68,6 @@ function toQuery(params = {}) {
   return query.toString() ? `?${query}` : "";
 }
 
-function normalize(payload, listKeys = []) {
-  if (Array.isArray(payload)) {
-    return {
-      data: payload,
-      total: payload.length,
-      raw: payload,
-    };
-  }
-
-  const key = listKeys.find((k) => Array.isArray(payload?.[k]));
-
-  const data = key
-    ? payload[key]
-    : payload?.data || payload?.items || payload?.results || [];
-
-  const total =
-    payload?.pagination?.total ??
-    payload?.total ??
-    payload?.count ??
-    data.length ??
-    0;
-
-  return {
-    ...payload,
-    data,
-    total,
-  };
-}
-
 function extractArray(payload, listKeys = []) {
   if (Array.isArray(payload)) return payload;
 
@@ -108,9 +79,78 @@ function extractArray(payload, listKeys = []) {
   if (Array.isArray(payload?.data)) return payload.data;
   if (Array.isArray(payload?.items)) return payload.items;
   if (Array.isArray(payload?.results)) return payload.results;
+  if (Array.isArray(payload?.rows)) return payload.rows;
   if (Array.isArray(payload?.data?.data)) return payload.data.data;
 
   return [];
+}
+
+function normalize(payload, listKeys = []) {
+  if (Array.isArray(payload)) {
+    return {
+      data: payload,
+      total: payload.length,
+      raw: payload,
+    };
+  }
+
+  const data = extractArray(payload, listKeys);
+
+  const total =
+    payload?.pagination?.total ??
+    payload?.meta?.total ??
+    payload?.total ??
+    payload?.count ??
+    payload?.totalCount ??
+    data.length ??
+    0;
+
+  return {
+    ...payload,
+    data,
+    total,
+  };
+}
+
+function countFrom(response, listKeys = []) {
+  if (!response) return 0;
+
+  const data = extractArray(response, listKeys);
+  const dataLength = data.length;
+
+  const declaredTotal =
+    response?.pagination?.total ??
+    response?.meta?.total ??
+    response?.total ??
+    response?.count ??
+    response?.totalCount ??
+    0;
+
+  return Math.max(Number(declaredTotal) || 0, dataLength);
+}
+
+function uniqueById(list = []) {
+  const seen = new Set();
+
+  return list.filter((item, index) => {
+    const key =
+      item?.id ||
+      item?.uuid ||
+      item?.relationship_id ||
+      item?.file_id ||
+      `${item?.person_id || item?.personId || ""}-${
+        item?.related_person_id || item?.relatedPersonId || ""
+      }-${item?.relationship_type || item?.type || ""}-${index}`;
+
+    if (!key) return true;
+
+    const normalizedKey = String(key);
+
+    if (seen.has(normalizedKey)) return false;
+
+    seen.add(normalizedKey);
+    return true;
+  });
 }
 
 export const authApi = {
@@ -182,7 +222,7 @@ export const usersApi = {
   },
 
   async roles() {
-    return normalize(await request("/users/roles"));
+    return normalize(await request("/users/roles"), ["roles"]);
   },
 
   create(payload) {
@@ -231,9 +271,19 @@ export const auditApi = {
 
 export const eventsApi = {
   async list(params = {}) {
+    try {
+      const direct = normalize(await request(`/events${toQuery(params)}`), [
+        "events",
+      ]);
+
+      if ((direct.data || []).length > 0) return direct;
+    } catch {
+      // fallback audit logs etsy ambany
+    }
+
     const logsResponse = await auditApi.list({
       page: 1,
-      limit: params.limit || 200,
+      limit: params.limit || 300,
     });
 
     const logs = logsResponse.data || [];
@@ -301,6 +351,80 @@ export const eventsApi = {
 };
 
 export const filesApi = {
+  async list(params = {}) {
+    try {
+      const direct = normalize(await request(`/files${toQuery(params)}`), [
+        "files",
+      ]);
+
+      if ((direct.data || []).length > 0) return direct;
+    } catch {
+      // fallback etsy ambany
+    }
+
+    let persons = [];
+
+    try {
+      const logs = await auditApi.list({ page: 1, limit: 500 });
+
+      const ids = (logs.data || [])
+        .filter(
+          (log) =>
+            String(log.target_type || log.targetType || "").toLowerCase() ===
+            "person"
+        )
+        .map((log) => log.target_id || log.targetId)
+        .filter(Boolean);
+
+      const uniqueIds = [...new Set(ids)];
+
+      const people = await Promise.all(
+        uniqueIds.map(async (id) => {
+          try {
+            const res = await personsApi.get(id);
+            return res?.data || res?.person || res;
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      persons = people.filter(Boolean);
+    } catch {
+      const personsResponse = await personsApi.list({
+        page: 1,
+        limit: 500,
+      });
+
+      persons = personsResponse.data || [];
+    }
+
+    const results = await Promise.all(
+      persons.map(async (person) => {
+        try {
+          const response = await filesApi.listByPerson(person.id, {
+            page: 1,
+            limit: 100,
+          });
+
+          return (response.data || []).map((file) => ({
+            ...file,
+            person_id: file.person_id || person.id,
+          }));
+        } catch {
+          return [];
+        }
+      })
+    );
+
+    const data = uniqueById(results.flat());
+
+    return {
+      data,
+      total: data.length,
+    };
+  },
+
   async listByPerson(personId, params = {}) {
     return normalize(
       await request(`/files/person/${personId}${toQuery(params)}`),
@@ -326,10 +450,60 @@ export const filesApi = {
 
 export const relationshipsApi = {
   async list(params = {}) {
-    return normalize(
-      await request(`/relationships${toQuery(params)}`),
-      ["relationships"]
-    );
+    try {
+      const response = await request(`/relationships${toQuery(params)}`);
+
+      const direct = normalize(response, ["relationships"]);
+
+      if ((direct.data || []).length > 0) {
+        return {
+          data: direct.data,
+          total: direct.data.length,
+        };
+      }
+    } catch {
+      
+    }
+
+    let persons = [];
+
+    try {
+      const personsResponse = await personsApi.list();
+      persons = extractArray(personsResponse, ["persons"]);
+    } catch {
+      persons = [];
+    }
+
+    const allRelations = [];
+
+    for (const person of persons) {
+      try {
+        const response = await request(
+          `/relationships/person/${person.id}${toQuery({
+            page: 1,
+            limit: 100,
+          })}`
+        );
+
+        const rows = extractArray(response, ["relationships"]);
+
+        rows.forEach((relation) => {
+          allRelations.push({
+            ...relation,
+            person_id: relation.person_id || person.id,
+          });
+        });
+      } catch {
+        
+      }
+    }
+
+    const data = uniqueById(allRelations);
+
+    return {
+      data,
+      total: data.length,
+    };
   },
 
   async listByPerson(personId, params = {}) {
@@ -484,6 +658,48 @@ export const contactsApi = {
   },
 };
 
+function getAddressRegion(address) {
+  return (
+    address?.region ||
+    address?.region_name ||
+    address?.regionName ||
+    address?.province ||
+    address?.state ||
+    address?.district ||
+    address?.city ||
+    address?.commune ||
+    "Non défini"
+  );
+}
+
+function buildPersonsByRegionFromAddresses(addresses = []) {
+  const groups = new Map();
+
+  addresses.forEach((address, index) => {
+    const region = String(getAddressRegion(address) || "Non défini").trim();
+    const personId =
+      address.person_id ||
+      address.personId ||
+      address.person?.id ||
+      address.owner_id ||
+      `address-${address.id || index}`;
+
+    if (!groups.has(region)) {
+      groups.set(region, new Set());
+    }
+
+    groups.get(region).add(String(personId));
+  });
+
+  return [...groups.entries()]
+    .map(([region, persons]) => ({
+      region,
+      total: persons.size,
+    }))
+    .filter((item) => item.total > 0)
+    .sort((a, b) => b.total - a.total);
+}
+
 export const dashboardApi = {
   async summary() {
     const safe = async (fn, fallback) => {
@@ -494,43 +710,115 @@ export const dashboardApi = {
       }
     };
 
-    const [persons, users, events, audit, documents] = await Promise.all([
+    const [
+      persons,
+      users,
+      documents,
+      relationships,
+      events,
+      files,
+      contacts,
+      addresses,
+      auditLogs,
+      auditStats,
+    ] = await Promise.all([
       safe(() => personsApi.list({ page: 1, limit: 1 }), {
         total: 0,
         data: [],
       }),
+
       safe(() => usersApi.list({ page: 1, limit: 1 }), {
         total: 0,
         data: [],
       }),
-      safe(() => eventsApi.list({ limit: 200 }), {
-        total: 0,
-        data: [],
-      }),
-      safe(() => auditApi.stats(), {
-        stats: {},
-        recentActivities: [],
-        actionsByDay: [],
-      }),
+
       safe(() => identityDocumentsApi.list({ page: 1, limit: 1 }), {
         total: 0,
         data: [],
       }),
+
+      safe(() => relationshipsApi.list({ page: 1, limit: 300 }), {
+        total: 0,
+        data: [],
+      }),
+
+      safe(() => eventsApi.list({ page: 1, limit: 300 }), {
+        total: 0,
+        data: [],
+      }),
+
+      safe(() => filesApi.list({ page: 1, limit: 300 }), {
+        total: 0,
+        data: [],
+      }),
+
+      safe(() => contactsApi.list({ page: 1, limit: 300 }), {
+        total: 0,
+        data: [],
+      }),
+
+      safe(() => addressesApi.list({ page: 1, limit: 500 }), {
+        total: 0,
+        data: [],
+      }),
+
+      safe(() => auditApi.list({ page: 1, limit: 300 }), {
+        total: 0,
+        data: [],
+      }),
+
+      safe(() => auditApi.stats(), {
+        stats: {},
+        recentActivities: [],
+        recent_activities: [],
+        actionsByDay: [],
+        actions_by_day: [],
+      }),
     ]);
 
+    const recentActivities =
+      auditStats.recentActivities ||
+      auditStats.recent_activities ||
+      auditStats.activities ||
+      auditLogs.data ||
+      [];
+
+    const addressesData = extractArray(addresses, ["addresses"]);
+
+    const regionsFromAddresses =
+      buildPersonsByRegionFromAddresses(addressesData);
+
+    const regionsFromPersons =
+      persons.persons_by_region ||
+      persons.personsByRegion ||
+      persons.regions ||
+      persons.data?.persons_by_region ||
+      [];
+
     return {
-      persons: persons.total || 0,
-      users: users.total || 0,
-      documents: documents.total || 0,
-      events: events.total || 0,
-      recent_activities: audit.recentActivities || [],
-      actions_by_day: audit.actionsByDay || [],
-      persons_by_region: [],
-      audit_stats: audit.stats || {},
+      persons: countFrom(persons, ["persons"]),
+      users: countFrom(users, ["users"]),
+      documents: countFrom(documents, [
+        "identity_documents",
+        "identityDocuments",
+        "documents",
+      ]),
+      relationships: countFrom(relationships, ["relationships"]),
+      events: countFrom(events, ["events"]),
+      files: countFrom(files, ["files"]),
+      contacts: countFrom(contacts, ["contacts"]),
+      audit_logs: countFrom(auditLogs, ["logs"]),
+
+      recent_activities: recentActivities,
+      actions_by_day: auditStats.actionsByDay || auditStats.actions_by_day || [],
+
+      persons_by_region:
+        regionsFromAddresses.length > 0 ? regionsFromAddresses : regionsFromPersons,
+
+      audit_stats: auditStats.stats || {},
     };
   },
 };
-
 export const searchApi = {
   async global(q) {
     return personsApi.list({
@@ -545,33 +833,41 @@ export const searchApi = {
 };
 
 export const rolesApi = {
-  async list(params = {}) {
-    return normalize(await request(`/roles${toQuery(params)}`), ["roles"]);
+  async list() {
+    return usersApi.roles();
   },
 
   get(id) {
-    return request(`/roles/${id}`);
+    return request(`/users/roles/${id}`);
   },
 
   create(payload) {
-    return request("/roles", {
+    return request("/users/roles", {
       method: "POST",
       body: JSON.stringify(payload),
     });
   },
 
   update(id, payload) {
-    return request(`/roles/${id}`, {
+    return request(`/users/roles/${id}`, {
       method: "PUT",
       body: JSON.stringify(payload),
     });
   },
 
   remove(id) {
-    return request(`/roles/${id}`, {
+    return request(`/users/roles/${id}`, {
       method: "DELETE",
     });
   },
 };
 
-export { API_BASE_URL, getToken, clearToken, toQuery, normalize, extractArray };
+export {
+  API_BASE_URL,
+  getToken,
+  clearToken,
+  toQuery,
+  normalize,
+  extractArray,
+  countFrom,
+};

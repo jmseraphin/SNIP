@@ -1,7 +1,7 @@
 import "../styles/documents.css";
 import { useEffect, useMemo, useState } from "react";
 import Topbar from "../components/Topbar";
-import { usersApi, rolesApi } from "../services/api";
+import { usersApi } from "../services/api";
 import { fmtDate, number } from "../utils/format";
 import {
   FaUserShield,
@@ -25,13 +25,6 @@ const emptyUserForm = {
   role_id: "",
   status: "active",
   password: "",
-};
-
-const emptyRoleForm = {
-  id: "",
-  name: "",
-  description: "",
-  permissions: "",
 };
 
 function getUserId(user) {
@@ -61,7 +54,7 @@ function getUserRoleId(user) {
 }
 
 function getRoleId(role) {
-  return role.id || role.role_id || "";
+  return role.id || role.role_id || role.roleId || "";
 }
 
 function getRoleName(role) {
@@ -104,6 +97,7 @@ function normalizeList(response, key) {
   if (Array.isArray(response)) return response;
   if (Array.isArray(response?.data)) return response.data;
   if (Array.isArray(response?.[key])) return response[key];
+  if (Array.isArray(response?.data?.[key])) return response.data[key];
   if (Array.isArray(response?.items)) return response.items;
   if (Array.isArray(response?.results)) return response.results;
   return [];
@@ -138,11 +132,7 @@ export default function UsersRoles() {
   const [rolesReady, setRolesReady] = useState(true);
 
   const [userModal, setUserModal] = useState(null);
-  const [roleModal, setRoleModal] = useState(null);
-
   const [userForm, setUserForm] = useState(emptyUserForm);
-  const [roleForm, setRoleForm] = useState(emptyRoleForm);
-
   const [showPassword, setShowPassword] = useState(false);
 
   const [error, setError] = useState("");
@@ -173,16 +163,7 @@ export default function UsersRoles() {
       setLoadingRoles(true);
       setRolesReady(true);
 
-      let response;
-
-      try {
-        response = await rolesApi.list({
-          page: 1,
-          limit: 200,
-        });
-      } catch {
-        response = await usersApi.roles();
-      }
+      const response = await usersApi.roles();
 
       setRoles(normalizeList(response, "roles"));
     } catch {
@@ -303,11 +284,17 @@ export default function UsersRoles() {
         return;
       }
 
+      const selectedRole = roles.find(
+        (role) =>
+          String(getRoleId(role)) === String(userForm.role_id) ||
+          String(getRoleName(role)) === String(userForm.role_id)
+      );
+
       const payload = {
         username: userForm.username,
         email: userForm.email,
         full_name: userForm.full_name,
-        role_id: userForm.role_id,
+        role_id: selectedRole ? getRoleId(selectedRole) : userForm.role_id,
       };
 
       if (userModal === "create") {
@@ -329,8 +316,36 @@ export default function UsersRoles() {
       }
 
       setUserModal(null);
+      setError("");
+      setUserForm(emptyUserForm);
       await loadUsers();
     } catch (e) {
+      if (userModal === "create") {
+        try {
+          const response = await usersApi.list({
+            page: 1,
+            limit: 200,
+          });
+
+          const freshUsers = normalizeList(response, "users");
+          const createdUser = freshUsers.find(
+            (user) =>
+              String(getUserName(user)).toLowerCase() ===
+              String(userForm.username).toLowerCase()
+          );
+
+          if (createdUser) {
+            setUsers(freshUsers);
+            setUserModal(null);
+            setError("");
+            setUserForm(emptyUserForm);
+            return;
+          }
+        } catch {
+    
+        }
+      }
+
       setError(getBackendError(e, "Erreur lors de l’enregistrement."));
     } finally {
       setSaving(false);
@@ -347,71 +362,6 @@ export default function UsersRoles() {
 
       await usersApi.remove(id);
       await loadUsers();
-    } catch (e) {
-      setError(getBackendError(e, "Erreur lors de la suppression."));
-    }
-  }
-
-  function openCreateRole() {
-    setRoleForm(emptyRoleForm);
-    setError("");
-    setRoleModal("create");
-  }
-
-  function openEditRole(role) {
-    setRoleForm({
-      id: getRoleId(role),
-      name: getRoleName(role) === "—" ? "" : getRoleName(role),
-      description: role.description || "",
-      permissions:
-        getRolePermissions(role) === "—" ? "" : getRolePermissions(role),
-    });
-
-    setError("");
-    setRoleModal("edit");
-  }
-
-  async function saveRole() {
-    try {
-      setSaving(true);
-      setError("");
-
-      if (!roleForm.name) {
-        setError("Le nom du rôle est obligatoire.");
-        return;
-      }
-
-      const payload = {
-        name: roleForm.name,
-        description: roleForm.description || null,
-        permissions: roleForm.permissions || null,
-      };
-
-      if (roleModal === "edit" && roleForm.id) {
-        await rolesApi.update(roleForm.id, payload);
-      } else {
-        await rolesApi.create(payload);
-      }
-
-      setRoleModal(null);
-      await loadRoles();
-    } catch (e) {
-      setError(getBackendError(e, "Erreur lors de l’enregistrement."));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function removeRole(role) {
-    try {
-      const id = getRoleId(role);
-      if (!id) return;
-
-      const confirmed = window.confirm("Supprimer ce rôle ?");
-      if (!confirmed) return;
-
-      await rolesApi.remove(id);
-      await loadRoles();
     } catch (e) {
       setError(getBackendError(e, "Erreur lors de la suppression."));
     }
@@ -475,12 +425,6 @@ export default function UsersRoles() {
                   <FaPlus /> Ajouter
                 </button>
               )}
-
-              {activeTab === "roles" && (
-                <button className="document-add-btn" onClick={openCreateRole}>
-                  <FaPlus /> Ajouter
-                </button>
-              )}
             </div>
           </div>
 
@@ -518,9 +462,7 @@ export default function UsersRoles() {
             </div>
           </div>
 
-          {error && !userModal && !roleModal && (
-            <div className="documents-error">{error}</div>
-          )}
+          {error && !userModal && <div className="documents-error">{error}</div>}
 
           {activeTab === "users" && (
             <div className="documents-table-responsive">
@@ -629,14 +571,13 @@ export default function UsersRoles() {
                     <th>Description</th>
                     <th>Permissions</th>
                     <th>Créé le</th>
-                    <th>Actions</th>
                   </tr>
                 </thead>
 
                 <tbody>
                   {loadingRoles && (
                     <tr>
-                      <td colSpan="5" className="documents-empty">
+                      <td colSpan="4" className="documents-empty">
                         Chargement...
                       </td>
                     </tr>
@@ -644,7 +585,7 @@ export default function UsersRoles() {
 
                   {!loadingRoles && !rolesReady && (
                     <tr>
-                      <td colSpan="5" className="documents-empty">
+                      <td colSpan="4" className="documents-empty">
                         —
                       </td>
                     </tr>
@@ -652,7 +593,7 @@ export default function UsersRoles() {
 
                   {!loadingRoles && rolesReady && filteredRoles.length === 0 && (
                     <tr>
-                      <td colSpan="5" className="documents-empty">
+                      <td colSpan="4" className="documents-empty">
                         —
                       </td>
                     </tr>
@@ -676,26 +617,6 @@ export default function UsersRoles() {
                           {role.created_at || role.createdAt
                             ? fmtDate(role.created_at || role.createdAt)
                             : "—"}
-                        </td>
-
-                        <td>
-                          <div className="document-action-buttons">
-                            <button
-                              className="document-icon-action"
-                              onClick={() => openEditRole(role)}
-                              title="Modifier"
-                            >
-                              <FaEdit />
-                            </button>
-
-                            <button
-                              className="document-icon-action document-delete-btn"
-                              onClick={() => removeRole(role)}
-                              title="Supprimer"
-                            >
-                              <FaTrash />
-                            </button>
-                          </div>
                         </td>
                       </tr>
                     ))}
@@ -802,7 +723,7 @@ export default function UsersRoles() {
                 >
                   <option value="active">Actif</option>
                   <option value="inactive">Inactif</option>
-                  <option value="blocked">Bloqué</option>
+                  <option value="locked">Verrouillé</option>
                 </select>
               </div>
 
@@ -851,78 +772,6 @@ export default function UsersRoles() {
               <button
                 className="documents-save-btn"
                 onClick={saveUser}
-                disabled={saving}
-              >
-                <FaSave /> {saving ? "Enregistrement..." : "Enregistrer"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {roleModal && (
-        <div className="documents-modal-overlay">
-          <div className="documents-modal-box">
-            <button
-              className="documents-modal-close"
-              onClick={() => setRoleModal(null)}
-            >
-              <FaTimes />
-            </button>
-
-            <h3>
-              {roleModal === "create" ? "Ajouter un rôle" : "Modifier rôle"}
-            </h3>
-
-            {error && <div className="documents-error">{error}</div>}
-
-            <div className="documents-form-grid">
-              <div className="document-field">
-                <label>Nom du rôle</label>
-                <input
-                  value={roleForm.name}
-                  onChange={(e) =>
-                    setRoleForm({ ...roleForm, name: e.target.value })
-                  }
-                  placeholder="Administrateur, Agent, Superviseur..."
-                />
-              </div>
-
-              <div className="document-field">
-                <label>Description</label>
-                <input
-                  value={roleForm.description}
-                  onChange={(e) =>
-                    setRoleForm({ ...roleForm, description: e.target.value })
-                  }
-                  placeholder="Description du rôle"
-                />
-              </div>
-
-              <div className="document-field document-field-wide">
-                <label>Permissions JSON</label>
-                <textarea
-                  value={roleForm.permissions}
-                  onChange={(e) =>
-                    setRoleForm({ ...roleForm, permissions: e.target.value })
-                  }
-                  placeholder='{"persons":["read","create","update"],"audit":["read"]}'
-                />
-              </div>
-            </div>
-
-            <div className="documents-modal-actions">
-              <button
-                className="documents-cancel-btn"
-                onClick={() => setRoleModal(null)}
-                disabled={saving}
-              >
-                Annuler
-              </button>
-
-              <button
-                className="documents-save-btn"
-                onClick={saveRole}
                 disabled={saving}
               >
                 <FaSave /> {saving ? "Enregistrement..." : "Enregistrer"}

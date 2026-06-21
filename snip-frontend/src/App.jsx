@@ -18,6 +18,7 @@ import { getToken } from "./services/api";
 import UsersRoles from "./pages/UsersRoles";
 import AuditLogs from "./pages/AuditLogs";
 
+
 function ProtectedRoute() {
   return getToken() ? <Layout /> : <Navigate to="/login" replace />;
 }
