@@ -110,3 +110,228 @@ code {
   background: var(--code-bg);
 }
 
+html.dark-mode,
+body.dark-mode {
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+body.dark-mode .app,
+body.dark-mode .main,
+body.dark-mode .main-content,
+body.dark-mode .content,
+body.dark-mode .page,
+body.dark-mode .dashboard-wrapper,
+body.dark-mode .persons-page,
+body.dark-mode .relationships-page,
+body.dark-mode .files-page,
+body.dark-mode .documents-page,
+body.dark-mode .events-page,
+body.dark-mode .addresses-page,
+body.dark-mode .contacts-page,
+body.dark-mode .settings-page,
+body.dark-mode .audit-page {
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+body.dark-mode .topbar {
+  background: #111827;
+  color: #f9fafb;
+  border-bottom: 1px solid #1f2937;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+}
+
+body.dark-mode .topbar-title h2,
+body.dark-mode .title-icon {
+  color: #f9fafb;
+}
+
+body.dark-mode .topbar-btn,
+body.dark-mode .notification-box,
+body.dark-mode .avatar-placeholder {
+  background: #1f2937;
+  color: #e5e7eb;
+  border: 1px solid #334155;
+}
+
+body.dark-mode .topbar-btn:hover,
+body.dark-mode .notification-box:hover,
+body.dark-mode .avatar-placeholder:hover,
+body.dark-mode .topbar-btn.active-theme {
+  background: #16a34a;
+  color: #ffffff;
+  border-color: #16a34a;
+}
+
+body.dark-mode .dropdown-menu,
+body.dark-mode .notification-dropdown {
+  background: #111827;
+  color: #e5e7eb;
+  border: 1px solid #334155;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.45);
+}
+
+body.dark-mode .dropdown-menu h4,
+body.dark-mode .notification-dropdown h4 {
+  color: #f9fafb;
+}
+
+body.dark-mode .dropdown-menu p,
+body.dark-mode .empty-notif {
+  color: #94a3b8;
+}
+
+body.dark-mode .dropdown-link {
+  color: #e5e7eb;
+}
+
+body.dark-mode .dropdown-link:hover {
+  background: #1f2937;
+  color: #ffffff;
+}
+
+body.dark-mode .sidebar {
+  background: #111827;
+  color: #e5e7eb;
+  border-right: 1px solid #1f2937;
+}
+
+body.dark-mode .sidebar a,
+body.dark-mode .sidebar-link {
+  color: #cbd5e1;
+}
+
+body.dark-mode .sidebar a:hover,
+body.dark-mode .sidebar-link:hover,
+body.dark-mode .sidebar a.active,
+body.dark-mode .sidebar-link.active {
+  background: #1f2937;
+  color: #ffffff;
+}
+
+body.dark-mode .card,
+body.dark-mode .box,
+body.dark-mode .settings-card,
+body.dark-mode .document-stat-card,
+body.dark-mode .relationship-stat-card,
+body.dark-mode .file-stat-card,
+body.dark-mode .contact-stat-card,
+body.dark-mode .address-stat-card,
+body.dark-mode .event-stat-card,
+body.dark-mode .documents-table-box,
+body.dark-mode .relationships-table-box,
+body.dark-mode .files-table-box,
+body.dark-mode .contacts-table-box,
+body.dark-mode .addresses-table-box,
+body.dark-mode .events-table-box {
+  background: #111827;
+  color: #e5e7eb;
+  border-color: #1f2937;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+}
+
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode h4,
+body.dark-mode strong {
+  color: #f9fafb;
+}
+
+body.dark-mode p,
+body.dark-mode span,
+body.dark-mode label {
+  color: #cbd5e1;
+}
+
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+  background: #0f172a;
+  color: #f9fafb;
+  border-color: #334155;
+}
+
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+  color: #64748b;
+}
+
+body.dark-mode input:focus,
+body.dark-mode select:focus,
+body.dark-mode textarea:focus {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.14);
+}
+
+body.dark-mode table {
+  background: #111827;
+  color: #e5e7eb;
+}
+
+body.dark-mode thead,
+body.dark-mode th {
+  background: #1f2937;
+  color: #f9fafb;
+  border-color: #334155;
+}
+
+body.dark-mode td {
+  color: #cbd5e1;
+  border-color: #1f2937;
+}
+
+body.dark-mode tbody tr {
+  background: #111827;
+}
+
+body.dark-mode tbody tr:hover {
+  background: #1e293b;
+}
+
+body.dark-mode .modal,
+body.dark-mode .modal-box,
+body.dark-mode .documents-modal-box,
+body.dark-mode .relationships-modal-box,
+body.dark-mode .files-modal-box,
+body.dark-mode .contacts-modal-box,
+body.dark-mode .addresses-modal-box,
+body.dark-mode .events-modal-box {
+  background: #111827;
+  color: #e5e7eb;
+  border: 1px solid #334155;
+}
+
+body.dark-mode .modal-overlay,
+body.dark-mode .documents-modal-overlay,
+body.dark-mode .relationships-modal-overlay,
+body.dark-mode .files-modal-overlay,
+body.dark-mode .contacts-modal-overlay,
+body.dark-mode .addresses-modal-overlay,
+body.dark-mode .events-modal-overlay {
+  background: rgba(2, 6, 23, 0.72);
+}
+
+body.dark-mode .login-container {
+  background: #0f172a;
+}
+
+body.dark-mode .login-right {
+  background: #0f172a;
+}
+
+body.dark-mode .login-box {
+  background: #111827;
+  color: #e5e7eb;
+  border: 1px solid #1f2937;
+}
+
+body.dark-mode .login-box h2 {
+  color: #22c55e;
+}
+
+body.dark-mode .subtitle,
+body.dark-mode .login-footer {
+  color: #94a3b8;
+}

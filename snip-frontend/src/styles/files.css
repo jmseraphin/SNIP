@@ -1,6 +1,7 @@
 .files-page {
   width: calc(100% - 40px);
   margin: 14px 20px 24px;
+  color: #0f172a;
 }
 
 .files-stats {
@@ -9,7 +10,7 @@
 
 .file-stat-card {
   width: 240px;
-  background: #fff;
+  background: #ffffff;
   border: 1px solid #eef2f7;
   border-radius: 18px;
   padding: 13px 14px;
@@ -24,10 +25,11 @@
   height: 36px;
   border-radius: 13px;
   background: linear-gradient(135deg, #335979, #7da0b8);
-  color: #fff;
+  color: #ffffff;
   display: grid;
   place-items: center;
   font-size: 14px;
+  flex-shrink: 0;
 }
 
 .file-stat-card h3 {
@@ -44,7 +46,7 @@
 }
 
 .files-table-box {
-  background: #fff;
+  background: #ffffff;
   border: 1px solid #eef2f7;
   border-radius: 20px;
   padding: 15px;
@@ -57,6 +59,10 @@
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 12px;
+}
+
+.files-table-header {
+  align-items: center;
 }
 
 .files-table-header h3 {
@@ -72,17 +78,41 @@
 }
 
 .file-add-btn {
+  width: auto !important;
+  min-width: unset !important;
+  height: 31px !important;
+  padding: 6px 11px !important;
   border: none;
+  border-radius: 10px !important;
   background: linear-gradient(135deg, #335979, #7da0b8);
-  color: #fff;
-  border-radius: 11px;
-  padding: 7px 11px;
+  color: #ffffff;
+  font-size: 11.5px !important;
+  font-weight: 800;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  font-size: 11.5px;
-  font-weight: 800;
   cursor: pointer;
+  white-space: nowrap;
+  margin-left: auto !important;
+  box-shadow: 0 8px 18px rgba(51, 89, 121, 0.22);
+  transition: 0.18s ease;
+}
+
+.file-add-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(51, 89, 121, 0.28);
+}
+
+.file-add-btn:active {
+  transform: translateY(0);
+}
+
+.file-add-btn svg {
+  width: 11px;
+  height: 11px;
+  font-size: 11px;
+  flex-shrink: 0;
 }
 
 .files-search-box {
@@ -105,10 +135,20 @@
   border-radius: 11px;
   border: 1px solid #e2e8f0;
   background: #f8fafc;
+  color: #0f172a;
   outline: none;
   padding: 0 11px 0 33px;
   font-size: 11.5px;
   box-sizing: border-box;
+}
+
+.files-search-box input::placeholder {
+  color: #94a3b8;
+}
+
+.files-search-box input:focus {
+  border-color: #335979;
+  box-shadow: 0 0 0 3px rgba(51, 89, 121, 0.12);
 }
 
 .files-table-responsive {
@@ -135,12 +175,20 @@
 
 .files-table td {
   padding: 7px 9px;
-  background: #fff;
+  background: #ffffff;
   border-top: 1px solid #f1f5f9;
   border-bottom: 1px solid #f1f5f9;
   font-size: 11.2px;
   color: #334155;
   line-height: 1.25;
+}
+
+.files-table tbody tr {
+  transition: 0.18s ease;
+}
+
+.files-table tbody tr:hover td {
+  background: #f8fafc;
 }
 
 .files-table td:first-child {
@@ -217,6 +265,11 @@
   border-radius: 9px;
   cursor: pointer;
   display: inline-block;
+  transition: 0.18s ease;
+}
+
+.file-icon-action:hover {
+  transform: translateY(-1px);
 }
 
 .file-icon-action svg {
@@ -260,15 +313,19 @@
   background: rgba(15, 23, 42, 0.35);
   display: grid;
   place-items: center;
+  padding: 14px;
+  box-sizing: border-box;
 }
 
 .files-modal-box {
   width: min(650px, calc(100% - 30px));
-  background: #fff;
+  background: #ffffff;
   border-radius: 20px;
   padding: 18px;
   position: relative;
   box-shadow: 0 25px 60px rgba(15, 23, 42, 0.22);
+  border: 1px solid #eef2f7;
+  box-sizing: border-box;
 }
 
 .files-modal-close {
@@ -282,6 +339,12 @@
   height: 28px;
   border-radius: 9px;
   cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.files-modal-close:hover {
+  background: #fee2e2;
+  color: #dc2626;
 }
 
 .files-modal-close svg {
@@ -297,6 +360,7 @@
   margin: 0 0 14px;
   font-size: 16px;
   font-weight: 900;
+  color: #0f172a;
 }
 
 .files-error {
@@ -318,11 +382,24 @@
 .files-form-grid textarea {
   border: 1px solid #e2e8f0;
   background: #f8fafc;
+  color: #0f172a;
   border-radius: 11px;
   padding: 0 11px;
   min-height: 37px;
   outline: none;
   font-size: 11.5px;
+  box-sizing: border-box;
+}
+
+.files-form-grid input::placeholder,
+.files-form-grid textarea::placeholder {
+  color: #94a3b8;
+}
+
+.files-form-grid input:focus,
+.files-form-grid textarea:focus {
+  border-color: #335979;
+  box-shadow: 0 0 0 3px rgba(51, 89, 121, 0.12);
 }
 
 .files-form-grid textarea {
@@ -347,6 +424,7 @@
   font-size: 11.5px;
   font-weight: 900;
   cursor: pointer;
+  transition: 0.18s ease;
 }
 
 .files-cancel-btn {
@@ -361,15 +439,203 @@
 
 .files-save-btn {
   background: #335979;
-  color: #fff;
+  color: #ffffff;
 }
 
-.file-add-btn {
-  width: auto !important;
-  min-width: unset !important;
-  height: 31px !important;
-  padding: 6px 11px !important;
-  font-size: 11.5px !important;
-  border-radius: 10px !important;
-  margin-left: auto !important;
+.files-save-btn:hover {
+  background: #294965;
+}
+
+body.dark-mode .files-page {
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+body.dark-mode .file-stat-card,
+body.dark-mode .files-table-box,
+body.dark-mode .files-modal-box {
+  background: #111827;
+  color: #e5e7eb;
+  border-color: #1f2937;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+}
+
+body.dark-mode .file-stat-card h3,
+body.dark-mode .files-table-header span,
+body.dark-mode .file-info span,
+body.dark-mode .files-empty,
+body.dark-mode .files-pagination {
+  color: #cbd5e1 !important;
+}
+
+body.dark-mode .file-stat-card p,
+body.dark-mode .files-table-header h3,
+body.dark-mode .files-modal-box h3,
+body.dark-mode .file-info h4,
+body.dark-mode .file-person {
+  color: #f9fafb !important;
+}
+
+body.dark-mode .files-search-box input,
+body.dark-mode .files-form-grid input,
+body.dark-mode .files-form-grid textarea {
+  background: #0f172a;
+  color: #f9fafb;
+  border-color: #334155;
+}
+
+body.dark-mode .files-search-box input::placeholder,
+body.dark-mode .files-form-grid input::placeholder,
+body.dark-mode .files-form-grid textarea::placeholder {
+  color: #64748b;
+}
+
+body.dark-mode .files-search-icon {
+  color: #94a3b8;
+}
+
+body.dark-mode .files-table th {
+  background: #1f2937;
+  color: #e5e7eb;
+}
+
+body.dark-mode .files-table td {
+  background: #111827;
+  color: #cbd5e1;
+  border-top-color: #1f2937;
+  border-bottom-color: #1f2937;
+}
+
+body.dark-mode .files-table tbody tr:hover td {
+  background: #1e293b;
+}
+
+body.dark-mode .files-table td:first-child {
+  border-left-color: #1f2937;
+}
+
+body.dark-mode .files-table td:last-child {
+  border-right-color: #1f2937;
+}
+
+body.dark-mode .file-avatar,
+body.dark-mode .file-type {
+  background: rgba(14, 165, 233, 0.18);
+  color: #7dd3fc;
+}
+
+body.dark-mode .file-url {
+  color: #cbd5e1;
+}
+
+body.dark-mode .file-download-btn {
+  background: rgba(14, 165, 233, 0.18);
+  color: #7dd3fc;
+}
+
+body.dark-mode .file-delete-btn {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+}
+
+body.dark-mode .files-modal-overlay {
+  background: rgba(2, 6, 23, 0.72);
+}
+
+body.dark-mode .files-modal-close {
+  background: #1f2937;
+  color: #e5e7eb;
+}
+
+body.dark-mode .files-modal-close:hover {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+}
+
+body.dark-mode .files-error {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.28);
+}
+
+body.dark-mode .files-cancel-btn {
+  background: #1f2937;
+  color: #e5e7eb;
+}
+
+body.dark-mode .files-cancel-btn:hover {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+}
+
+body.dark-mode .files-save-btn,
+body.dark-mode .file-add-btn {
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
+  color: #ffffff;
+}
+
+body.dark-mode .files-save-btn:hover {
+  background: #0d9488;
+}
+
+@media (max-width: 900px) {
+  .files-page {
+    width: calc(100% - 28px);
+    margin: 12px 14px 20px;
+  }
+
+  .files-table-header,
+  .files-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .file-stat-card {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .file-add-btn {
+    height: 30px !important;
+    padding: 0 10px !important;
+    font-size: 11px !important;
+    border-radius: 9px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .files-page {
+    width: calc(100% - 24px);
+    margin: 12px;
+  }
+
+  .files-table-box {
+    padding: 12px;
+    border-radius: 15px;
+  }
+
+  .files-table th {
+    padding: 7px 8px;
+    font-size: 9.5px;
+  }
+
+  .files-table td {
+    padding: 7px 8px;
+    font-size: 11px;
+  }
+
+  .files-modal-box {
+    width: 100%;
+    border-radius: 16px;
+    padding: 16px;
+  }
+
+  .files-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .files-cancel-btn,
+  .files-save-btn {
+    width: 100%;
+  }
 }

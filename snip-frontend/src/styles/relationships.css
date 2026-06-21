@@ -5,9 +5,9 @@
   padding: 0 12px;
   box-sizing: border-box;
   overflow-x: hidden;
+  color: #0f172a;
 }
 
-/* ===== STATS ===== */
 .relationships-stats {
   margin-bottom: 11px;
 }
@@ -54,7 +54,6 @@
   line-height: 1;
 }
 
-/* ===== TABLE BOX ===== */
 .relationships-table-box {
   width: 100%;
   max-width: 100%;
@@ -88,7 +87,6 @@
   color: #64748b;
 }
 
-/* ===== ADD BUTTON ===== */
 .relationship-add-btn {
   width: auto;
   min-width: auto;
@@ -124,7 +122,6 @@
   transform: translateY(0);
 }
 
-/* ===== FILTERS ===== */
 .relationships-filters {
   display: flex;
   justify-content: space-between;
@@ -165,6 +162,10 @@
   padding-left: 32px;
 }
 
+.relationships-search-box input::placeholder {
+  color: #94a3b8;
+}
+
 .relationships-filters select {
   max-width: 150px;
   flex-shrink: 0;
@@ -176,7 +177,6 @@
   box-shadow: 0 0 0 3px rgba(51, 89, 121, 0.1);
 }
 
-/* ===== TABLE ===== */
 .relationships-table-responsive {
   width: 100%;
   max-width: 100%;
@@ -219,7 +219,6 @@
   overflow-wrap: break-word;
 }
 
-/* Largeur exacte des colonnes */
 .relationships-table th:nth-child(1),
 .relationships-table td:nth-child(1) {
   width: 18%;
@@ -294,7 +293,6 @@
   line-height: 1.35;
 }
 
-/* ===== ACTIONS ===== */
 .relationship-action-buttons {
   display: flex;
   justify-content: center;
@@ -357,7 +355,6 @@
   color: #64748b;
 }
 
-/* ===== MODAL OVERLAY ===== */
 .relationships-modal-overlay {
   position: fixed;
   inset: 0;
@@ -371,7 +368,6 @@
   box-sizing: border-box;
 }
 
-/* ===== MODAL BOX ===== */
 .relationships-modal-box {
   position: relative;
   width: min(700px, calc(100vw - 28px));
@@ -420,7 +416,6 @@
   background: linear-gradient(90deg, #335979, #7da0b8);
 }
 
-/* ===== MODAL CLOSE / X ===== */
 .relationships-modal-close {
   position: absolute;
   top: 12px;
@@ -466,7 +461,6 @@
   display: none !important;
 }
 
-/* ===== ERROR ===== */
 .relationships-error {
   grid-column: 1 / -1;
   background: #fef2f2;
@@ -479,7 +473,6 @@
   margin-bottom: 11px;
 }
 
-/* ===== FORM ===== */
 .relationships-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -525,6 +518,12 @@
   box-sizing: border-box;
 }
 
+.relationship-field input::placeholder,
+.relationship-field textarea::placeholder,
+.relationship-picker input::placeholder {
+  color: #94a3b8;
+}
+
 .relationship-field input:focus,
 .relationship-field select:focus,
 .relationship-field textarea:focus,
@@ -554,7 +553,6 @@
   background: #ffffff;
 }
 
-/* ===== PICKER LIST ===== */
 .relationship-picker-list {
   max-height: 165px;
   overflow-y: auto;
@@ -582,11 +580,7 @@
   box-sizing: border-box;
 }
 
-.relationship-picker-item:hover {
-  background: #e0f2fe;
-  color: #0f172a;
-}
-
+.relationship-picker-item:hover,
 .relationship-picker-item.active {
   background: #e0f2fe;
   color: #0f172a;
@@ -607,16 +601,6 @@
   word-break: break-word;
 }
 
-.relationship-picker-item:hover strong,
-.relationship-picker-item.active strong {
-  color: #0f172a;
-}
-
-.relationship-picker-item:hover span,
-.relationship-picker-item.active span {
-  color: #475569;
-}
-
 .relationship-picker-empty {
   padding: 10px;
   font-size: 11.5px;
@@ -624,7 +608,6 @@
   text-align: center;
 }
 
-/* ===== MODAL ACTIONS ===== */
 .relationships-modal-actions {
   margin-top: 15px;
   display: flex;
@@ -675,7 +658,6 @@
   transform: none;
 }
 
-/* ===== DETAIL MODAL ===== */
 .relationship-detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -714,7 +696,184 @@
   grid-column: 1 / -1;
 }
 
-/* ===== RESPONSIVE ===== */
+body.dark-mode .relationships-page {
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+body.dark-mode .relationship-stat-card,
+body.dark-mode .relationships-table-box,
+body.dark-mode .relationships-modal-box {
+  background: #111827;
+  color: #e5e7eb;
+  border-color: #1f2937;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+}
+
+body.dark-mode .relationship-stat-card h3,
+body.dark-mode .relationships-table-header span,
+body.dark-mode .relationships-empty,
+body.dark-mode .relationships-pagination,
+body.dark-mode .relationship-picker-empty,
+body.dark-mode .relationship-info-card span {
+  color: #cbd5e1 !important;
+}
+
+body.dark-mode .relationship-stat-card p,
+body.dark-mode .relationships-table-header h3,
+body.dark-mode .relationships-modal-box h3,
+body.dark-mode .relationship-field label,
+body.dark-mode .relationship-picker label,
+body.dark-mode .relationship-date-label,
+body.dark-mode .relationship-picker-item strong,
+body.dark-mode .relationship-info-card strong {
+  color: #f9fafb;
+}
+
+body.dark-mode .relationships-search-box input,
+body.dark-mode .relationships-filters select,
+body.dark-mode .relationship-field input,
+body.dark-mode .relationship-field select,
+body.dark-mode .relationship-field textarea,
+body.dark-mode .relationship-picker input {
+  background: #0f172a;
+  color: #f9fafb;
+  border-color: #334155;
+}
+
+body.dark-mode .relationships-search-box input::placeholder,
+body.dark-mode .relationship-field input::placeholder,
+body.dark-mode .relationship-field textarea::placeholder,
+body.dark-mode .relationship-picker input::placeholder {
+  color: #64748b;
+}
+
+body.dark-mode .relationships-search-icon {
+  color: #94a3b8;
+}
+
+body.dark-mode .relationships-table th {
+  background: #1f2937;
+  color: #e5e7eb;
+}
+
+body.dark-mode .relationships-table td {
+  background: #111827;
+  color: #cbd5e1;
+  border-top-color: #1f2937;
+  border-bottom-color: #1f2937;
+}
+
+body.dark-mode .relationships-table td:first-child {
+  border-left-color: #1f2937;
+}
+
+body.dark-mode .relationships-table td:last-child {
+  border-right-color: #1f2937;
+}
+
+body.dark-mode .relationships-table tbody tr:hover td {
+  background: #1e293b;
+}
+
+body.dark-mode .relationship-type {
+  background: rgba(14, 165, 233, 0.18);
+  color: #7dd3fc;
+}
+
+body.dark-mode .relationship-notes {
+  color: #cbd5e1;
+}
+
+body.dark-mode .relationship-view-btn {
+  background: rgba(14, 165, 233, 0.18);
+  color: #7dd3fc;
+}
+
+body.dark-mode .relationship-edit-btn {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+}
+
+body.dark-mode .relationship-delete-btn {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+}
+
+body.dark-mode .relationships-modal-overlay {
+  background: rgba(2, 6, 23, 0.72);
+}
+
+body.dark-mode .relationships-modal-close {
+  background: #1f2937;
+  color: #e5e7eb;
+  border-color: #334155;
+}
+
+body.dark-mode .relationships-modal-close::before {
+  color: #e5e7eb;
+}
+
+body.dark-mode .relationships-modal-close:hover {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.28);
+}
+
+body.dark-mode .relationships-modal-close:hover::before {
+  color: #fca5a5;
+}
+
+body.dark-mode .relationships-error {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.28);
+}
+
+body.dark-mode .relationship-date-field,
+body.dark-mode .relationship-picker-list,
+body.dark-mode .relationship-info-card {
+  background: #1f2937;
+  border-color: #334155;
+}
+
+body.dark-mode .relationship-date-field input {
+  background: #0f172a;
+}
+
+body.dark-mode .relationship-picker-item {
+  color: #e5e7eb;
+}
+
+body.dark-mode .relationship-picker-item:hover,
+body.dark-mode .relationship-picker-item.active {
+  background: #334155;
+  color: #ffffff;
+}
+
+body.dark-mode .relationship-picker-item span {
+  color: #cbd5e1;
+}
+
+body.dark-mode .relationships-modal-actions {
+  border-top-color: #334155;
+}
+
+body.dark-mode .relationships-cancel-btn {
+  background: #1f2937;
+  color: #e5e7eb;
+}
+
+body.dark-mode .relationships-cancel-btn:hover {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+}
+
+body.dark-mode .relationships-save-btn {
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
+  color: #ffffff;
+}
+
 @media (max-width: 1100px) {
   .relationships-table {
     min-width: 900px;

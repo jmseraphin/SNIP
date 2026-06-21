@@ -1,5 +1,5 @@
 import "../styles/Topbar.css";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { authApi } from "../services/api";
 import { FaBell, FaThLarge, FaMoon, FaSun } from "react-icons/fa";
 import { useState, useRef, useEffect } from "react";
@@ -45,20 +45,30 @@ const titleLabels = {
   },
 };
 
+function applyTheme(isDark) {
+  const theme = isDark ? "dark" : "light";
+
+  document.documentElement.classList.toggle("dark-mode", isDark);
+  document.body.classList.toggle("dark-mode", isDark);
+  document.documentElement.setAttribute("data-theme", theme);
+  document.body.setAttribute("data-theme", theme);
+
+  localStorage.setItem("snip_dark_mode", isDark ? "true" : "false");
+  window.dispatchEvent(new CustomEvent("snip-theme-change", { detail: theme }));
+}
+
 export default function Topbar({ title }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [openMenu, setOpenMenu] = useState(false);
   const [openNotif, setOpenNotif] = useState(false);
-
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem("snip_dark_mode") === "true";
-  });
-
-  const [language, setLanguage] = useState(() => {
-    return localStorage.getItem("snip_language") || "FR";
-  });
-
+  const [darkMode, setDarkMode] = useState(
+    () => localStorage.getItem("snip_dark_mode") === "true"
+  );
+  const [language, setLanguage] = useState(
+    () => localStorage.getItem("snip_language") || "FR"
+  );
   const [notifications, setNotifications] = useState([
     "Nouvel utilisateur ajouté",
     "Document importé",
@@ -69,15 +79,7 @@ export default function Topbar({ title }) {
   const notifRef = useRef(null);
 
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark-mode");
-      document.body.classList.add("dark-mode");
-      localStorage.setItem("snip_dark_mode", "true");
-    } else {
-      document.documentElement.classList.remove("dark-mode");
-      document.body.classList.remove("dark-mode");
-      localStorage.setItem("snip_dark_mode", "false");
-    }
+    applyTheme(darkMode);
   }, [darkMode]);
 
   useEffect(() => {
@@ -104,7 +106,7 @@ export default function Topbar({ title }) {
   }, []);
 
   const handleNotification = () => {
-    setOpenNotif(!openNotif);
+    setOpenNotif((current) => !current);
 
     if (notifications.length > 0) {
       setNotifications([]);
@@ -115,13 +117,17 @@ export default function Topbar({ title }) {
     setLanguage((current) => (current === "FR" ? "EN" : "FR"));
   };
 
+  const toggleDarkMode = () => {
+    setDarkMode((current) => !current);
+  };
+
   const handleLogout = async () => {
     await authApi.logout();
     navigate("/login", { replace: true });
   };
 
   const t = titleLabels[language] || titleLabels.FR;
-  const currentTitle = t[window.location.pathname] || title;
+  const currentTitle = t[location.pathname] || title || "SNIP";
 
   return (
     <div className="topbar">
@@ -142,9 +148,9 @@ export default function Topbar({ title }) {
 
         <button
           type="button"
-          className="topbar-btn"
-          onClick={() => setDarkMode(!darkMode)}
-          title="Mode sombre"
+          className={darkMode ? "topbar-btn active-theme" : "topbar-btn"}
+          onClick={toggleDarkMode}
+          title={darkMode ? "Mode clair" : "Mode sombre"}
         >
           {darkMode ? <FaSun /> : <FaMoon />}
         </button>
@@ -177,7 +183,7 @@ export default function Topbar({ title }) {
           <button
             type="button"
             className="avatar-placeholder"
-            onClick={() => setOpenMenu(!openMenu)}
+            onClick={() => setOpenMenu((current) => !current)}
           >
             {(t.adminUser || "Admin").charAt(0).toUpperCase()}
           </button>
@@ -193,7 +199,11 @@ export default function Topbar({ title }) {
                 {t.settings}
               </Link>
 
-              <button className="dropdown-link" onClick={handleLogout}>
+              <button
+                type="button"
+                className="dropdown-link"
+                onClick={handleLogout}
+              >
                 {t.logout}
               </button>
             </div>
